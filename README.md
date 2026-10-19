@@ -9,7 +9,7 @@
 - [**Use Cases**](#use-cases)
 - [**Requirements**](#requirements)
   - [Functional Requirements](#functional-requirements)
-  - [Non-Functional Requirements](#non-function-requirements)
+  - [Non-Functional Requirements](#non-functional-requirements)
   - [Constraints ](#constraints)
 - [**Data Model**](#data-model)
 - [**Flowchart**](#flowchart)
@@ -61,7 +61,7 @@ The main use cases are as follows.
 - ### [**Back Up System Logs**](./use-cases/back-up-system-logs.md): 
 		Describes how the system administrator backs up the system’s logs. 
 
-<img src="./<img width="1100" height="800" alt="usecase-diagram drawio" src="https://github.com/user-attachments/assets/dd4e3c0e-d6a3-42ed-9348-de134cb22647" />
+<img width="1100" height="800" alt="usecase-diagram drawio" src="https://github.com/user-attachments/assets/dd4e3c0e-d6a3-42ed-9348-de134cb22647" />
 
 
 ## Requirements 
@@ -71,30 +71,54 @@ The main use cases are as follows.
 	- Implement a rules-based system to validate and verify vacation and leave requests.
 	- Allow employees to submit vacation requests up to 1.5 years in advance.
 	- Provide access to vacation request history for the previous calendar year.
+	- Show the employee, when they open the system, their requests and leave balances for the last 6 months up to 18 months ahead.
+	- Let the employee choose only a leave category with a positive balance.
+	- Let the employee select one or more days and the number of hours for each day, using a visual calendar to choose and compare dates.
+	- Let the employee enter a short title and a description limited to one paragraph.
+	- Validate each request before it is accepted: required data is present, hours are positive, dates are within the 1.5-year window, title and description limits are met, HR-defined location and leave category rules are satisfied, and the balance is sufficient (balance check to be confirmed).
+	- Display validation errors, identifying and explaining each one, and let the employee correct the data or cancel the request.
+	- Return the employee to the system home page after a successful submission.
 2. Approval Workflow
 	- Enable manager approval.
 	- Notify manager via email of pending approval request.
 	- Notify employees via email of changes to their request status.
+	- Set a submitted request to Pending Approval when manager approval is required. A decided request becomes Approved or Rejected.
+	- Record a request that does not require approval without the Pending Approval state. The resulting status follows the business rule (to be confirmed).
+	- Support employees who have more than one manager, and notify all managers authorized to approve their requests (whether one approval or all approvals are required is to be confirmed).
+	- Let the manager open a request through the link in the email, or by navigating to the system from the portal, and verify the manager's identity if required.
+	- Show the manager their own requests and balances, and a separate section for pending requests from subordinates. Let the manager select each request individually and view its details.
+	- Let an authorized manager approve or reject a request. A rejection requires an explanation.
+	- Include the decision and, for a rejection, the explanation in the email sent to the employee.
+	- Record each decision with the deciding manager and the time, and update the request status.
+	- Do not allow a decision on a request that has already been decided (to be confirmed).
+	- Update the employee's leave balance after a decision according to company policy (to be confirmed).
+	- Return the manager to the system home page after the decision, where they can review other requests, submit their own, or leave the system.
 3. Integration
 	- Ensure seamless integration with existing hardware and software systems.
 	- Leverage the organization's SSO portal for secure authentication.
+	- Make the system accessible through a link in the organization's portal.
+	- Use the organization's email service to send notifications.
 4.  Logging and Overrides
 	- Maintain activity logs for all transactions to ensure traceability.
 	- Allow HR and system administrator to override actions, with all the overrides logged.
+	- Log each request submission and each manager decision, including who performed it and when.
 5. HR Flexibility
 	- Enable HR to set and modify constraints on vacation requests.
 	- Allow managers to award additional personal leave time within system defined limits.
+	- Apply the HR-defined location and leave category rules when validating requests.
 ### Non-Functional Requirements
-- **Useability**: The system must be intuitive, easy to navigate, and require minimal training for users.
+- **Useability**: The system must be intuitive, easy to navigate, and require minimal training for users. Date selection uses a visual calendar, and validation errors are clearly identified and explained.
 - **Portability**: The system should function effectively on the organization's existing hardware.
 - **Compatibility**: Integrate with the current HR system to retrieve and update employee data seamlessly.
-- **Security**: Ensure secure authentication and data privacy through encryption and access control.
+- **Security**: Ensure secure authentication and data privacy through encryption and access control. Employees can access only their own requests, and managers can decide only on requests from their own subordinates.
 - **Availability**: Provide 24/7 access with minimal downtime.
 - **Accountability**: Log all transactions and system actions to ensure transparency and auditability.
 
 ### Constraints 
 - The system must integrate with existing HR systems for employee data synchronization.
 - All features must comply with the organization's IT infrastructure and policies.
+- Authentication must go through the organization's SSO portal, and users reach the system through the organization's portal.
+- Notifications depend on the organization's email service being available.
 
 ---
 
@@ -256,7 +280,8 @@ flowchart TD
         D1 -- No --> E1["Show errors"]
         E1 -- Employee corrects data --> A4
         E1 -- Cancel --> X1([End: cancelled])
-        D1 -- Yes --> A5["Return to VTS home page"]
+        D1 -- Yes --> L1["Log request submission"]
+        L1 --> A5["Return to VTS home page"]
         A5 --> D2{"Approval required?"}
         D2 -- No --> N1["Record without approval<br/>(rule to confirm)"]
         N1 --> X2([End])
@@ -267,12 +292,17 @@ flowchart TD
         B1["Manager opens VTS<br/>(e-mail link or portal)"]
         B1 --> B2["Verify identity<br/>(login if required)"]
         B2 --> B3["Review pending list,<br/>select request, view details"]
-        B3 --> D3{"Approve?"}
+        B3 --> D4{"Already decided?"}
+        D4 -- Yes --> B9["Show current status<br/>(no new decision)"]
+        B9 --> B8
+        D4 -- No --> D3{"Approve?"}
         D3 -- Yes --> B4["Status = Approved"]
         D3 -- No --> B5["Enter rejection explanation<br/>(required)"]
         B5 --> B6["Status = Rejected"]
-        B4 --> B7["Log decision<br/>E-mail employee"]
-        B6 --> B7
+        B4 --> L2["Record and log decision"]
+        B6 --> L2
+        L2 --> U1["Update leave allowance"]
+        U1 --> B7["E-mail employee with decision"]
         B7 --> B8["Manager returns to home page"]
         B8 --> X3([End])
     end
@@ -302,6 +332,7 @@ sequenceDiagram
         V-->>E: 6. Redisplay page with errors
         E->>V: 7. Correct data or cancel
     else Data valid
+        V->>V: Log request submission
         V-->>E: 8. Return to VTS home page
         opt Approval required
             V->>M: 8. Send approval e-mail
@@ -312,16 +343,21 @@ sequenceDiagram
             V-->>G: 12. Home: own requests + pending requests
             G->>V: 12. Select a request
             V-->>G: 13. Show request details
-            alt Manager approves
-                G->>V: 13. Approve
-                V->>V: Status = Approved
-            else Manager rejects
-                G->>V: 13. Reject + rejection explanation
-                V->>V: Status = Rejected
+            alt Request already decided
+                V-->>G: Show current status (no new decision)
+            else Request pending
+                alt Manager approves
+                    G->>V: 13. Approve
+                    V->>V: Status = Approved
+                else Manager rejects
+                    G->>V: 13. Reject + rejection explanation
+                    V->>V: Status = Rejected
+                end
+                V->>V: Log decision
+                V->>V: Update leave allowance
+                V->>M: 14. Send decision e-mail
+                M-->>E: 14. Approved / Rejected notification
             end
-            V->>V: Log activity
-            V->>M: 14. Send decision e-mail
-            M-->>E: 14. Approved / Rejected notification
             V-->>G: 14. Return to home page
         end
     end
@@ -337,19 +373,19 @@ Lines marked `TO CONFIRM` are assumptions that need validation against the detai
 
 ```text
 PROCEDURE ManageTime(employee)
-  REQUIRE employee.isAuthenticated()              
-  showDashboard(employee)                         
-  request <- createRequest(employee)              
-  IF request = NULL THEN RETURN                   
+  REQUIRE employee.isAuthenticated()
+  showDashboard(employee)
+  request <- createRequest(employee)
+  IF request = NULL THEN RETURN
   request.submittedAt <- now()
   logActivity(employee, "SUBMIT_REQUEST", request)
-  IF approvalRequired(request) THEN               
+  IF approvalRequired(request) THEN
     managers <- getAuthorizedManagers(employee)
-    request.status <- PENDING_APPROVAL            
+    request.status <- PENDING_APPROVAL
     saveRequest(request)
     sendEmail(managers, requestLink(request))
   ELSE
-    recordWithoutApproval(request)                
+    recordWithoutApproval(request)
   END IF
 END PROCEDURE
 ```
@@ -370,17 +406,17 @@ END PROCEDURE
 
 ```text
 FUNCTION createRequest(employee)
-  categories <- allowances WHERE remainingHours > 0   
+  categories <- allowances WHERE remainingHours > 0
   category   <- employee.chooses(categories)
   LOOP
-    days  <- calendar.select(dates, hoursPerDay)      
+    days  <- calendar.select(dates, hoursPerDay)
     title <- input(); description <- input()
     action <- employee.chooses(SUBMIT, CANCEL)
     IF action = CANCEL THEN RETURN NULL
     request <- newRequest(employee, category, days, title, description)
-    errors <- validate(request)                       
-    IF errors is empty THEN RETURN request            
-    display(errors)                                   
+    errors <- validate(request)
+    IF errors is empty THEN RETURN request
+    display(errors)
   END LOOP
 END FUNCTION
 
@@ -397,7 +433,7 @@ FUNCTION validate(request)
   FOR EACH rule IN rules
     IF NOT rule.isSatisfiedBy(request) THEN add rule.message
   IF totalHours(request) > remainingHours(request)
-    THEN add "insufficient balance"                   
+    THEN add "insufficient balance"
   RETURN errors
 END FUNCTION
 ```
@@ -406,26 +442,26 @@ END FUNCTION
 
 ```text
 PROCEDURE reviewRequests(manager)
-  authenticate(manager)                           
+  authenticate(manager)
   pending <- findRequests(status = PENDING_APPROVAL, approver = manager)
-  display(ownRequests(manager), allowances(manager), pending)   
+  display(ownRequests(manager), allowances(manager), pending)
   request <- manager.selects(pending)
-  display(request.details)                        
+  display(request.details)
   IF request.status <> PENDING_APPROVAL THEN
-    display("Already decided"); RETURN            
+    display("Already decided"); RETURN
   END IF
   decision <- manager.chooses(APPROVE, REJECT)
   IF decision = APPROVE THEN
     request.status <- APPROVED
   ELSE
-    reason <- manager.enterReason()               
+    reason <- manager.enterReason()
     WHILE reason is empty: reason <- manager.enterReason()
     request.status <- REJECTED
   END IF
   saveDecision(request, manager, decision, reason, now())
   logActivity(manager, decision, request)
-  updateAllowance(request)                        
-  sendEmail(request.employee, decision, reason)   
+  updateAllowance(request)
+  sendEmail(request.employee, decision, reason)
   goToHomePage(manager)
 END PROCEDURE
 ```
