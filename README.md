@@ -1,398 +1,312 @@
-
 # Vacation Tracking System (VTS)
 
-A web-based application for managing, submitting, reviewing, and tracking employee vacation requests across multiple projects and reporting relationships.
+A web application, delivered as an extension of the company Intranet, for managing and tracking employee vacations: employees submit requests, authorized managers review and decide, and everyone gets visibility into vacation balances and request status.
+
+> **Note on conventions:** items marked **TO CONFIRM** are inferred from the scenario and must be validated against the original case study before being treated as final requirements.
+
+## Table of Contents
+
+1. [Vision](#1-vision)
+2. [System Requirements](#2-system-requirements)
+3. [Domain (Problem Definition)](#3-domain-problem-definition)
+4. [Actors](#4-actors)
+5. [Use Cases](#5-use-cases)
+6. [Entities (Data Model)](#6-entities-data-model)
+7. [Flowchart (System Flow)](#7-flowchart-system-flow)
+8. [Sequence Diagram](#8-sequence-diagram)
+9. [Pseudocode](#9-pseudocode)
 
 ---
 
 ## 1. Vision
 
-### 1.1 Problem
-Employees may work on multiple projects and report to more than one manager. This makes it difficult to coordinate vacation requests, track available vacation balances, and identify the managers responsible for reviewing and approving requests.
+### Problem
 
-### 1.2 Target Users
-- **Employees:** View vacation balances and request history, submit vacation requests, and receive decisions.
-- **Managers:** Review requests from authorized employees and approve or reject them.
-- **System Administrators / HR Staff:** May be included in a future scope for managing employee records, vacation policies, and balances. They are not explicitly defined as actors in the current use case.
+Tracking employee vacations is difficult because employees work on multiple projects and report to more than one manager. Requests, balances, and approvals are hard to follow, and coordination between employees and managers is slow.
 
-### 1.3 Proposed Solution
-Develop a web-based Vacation Tracking System accessible through the organization's intranet portal. The system will allow employees to view their vacation information, submit requests, and track the request process. It will also allow authorized managers to review requests, record decisions, and notify employees through email.
+### Target Users
 
-### 1.4 Business Value
-- Improve visibility into employee vacation balances and requests.
-- Improve coordination between employees and multiple managers.
-- Reduce manual communication and administrative effort.
-- Provide consistent tracking of request statuses and decisions.
-- Make vacation approval responsibilities clearer across projects.
+- **Employees**
+- **Managers**
+
+### Proposed Solution
+
+A **web application** (the VTS) that lets employees request vacations and view their balances, and lets authorized managers review, approve, or reject requests, with e-mail notifications at each step.
+
+### Business Value
+
+- Better visibility into vacation balances and requests.
+- Easier coordination between employees and managers.
+- A single, consistent place to record decisions and request status.
 
 ---
 
 ## 2. System Requirements
 
-### 2.1 Functional Requirements
+### Functional Requirements
+
+**A. Employee: vacation request management**
 
 | ID | Requirement |
-|---|---|
-| FR-01 | The system shall display an employee's vacation requests and balances for the previous six months through eighteen months into the future. |
-| FR-02 | The system shall allow an employee to select a vacation category only when the employee has a positive balance for that category. |
-| FR-03 | The system shall provide a calendar interface for selecting vacation dates. |
-| FR-04 | The system shall allow the employee to specify the requested hours for each vacation date. |
-| FR-05 | The system shall collect a short title and a description for each vacation request. |
-| FR-06 | The system shall validate submitted request information. |
-| FR-07 | If validation fails, the system shall redisplay the request form and identify the errors. |
-| FR-08 | The system shall allow the employee to correct invalid information or cancel the request. |
-| FR-09 | The system shall save a request after its information passes validation. |
-| FR-10 | If manager approval is required, the system shall set the request status to `Pending Approval`. |
-| FR-11 | The system shall email authorized manager(s) when a request requires their approval. |
-| FR-12 | A manager shall be able to access a request through an email link or through the intranet portal. |
-| FR-13 | The system shall display the manager's own vacation information and pending requests from employees they are authorized to manage. |
-| FR-14 | The system shall allow a manager to review requests individually and view their details. |
-| FR-15 | The system shall allow an authorized manager to approve a vacation request. |
-| FR-16 | The system shall allow an authorized manager to reject a vacation request. |
-| FR-17 | The system shall require an explanation when a manager rejects a request. |
-| FR-18 | The system shall record the manager's decision and update the request status to `Approved` or `Rejected`. |
-| FR-19 | The system shall email the employee to communicate the decision. |
-| FR-20 | After handling a request, the manager shall be able to return to the home page and review other requests, submit a personal request, or leave the system. |
+|----|-------------|
+| FR-01 | **View Vacation Information:** the system shall show the employee their requests and vacation balances, covering the last 6 months and up to 18 months into the future. |
+| FR-02 | **Select Vacation Category:** the system shall let the employee choose only a vacation type with a positive balance. |
+| FR-03 | **Specify Vacation Dates and Hours:** the system shall let the employee select one or more days and the hours per day, with a visual calendar to help choose and compare dates. |
+| FR-04 | **Enter Request Details:** the system shall let the employee enter a short title and a description of no more than one paragraph. |
+| FR-05 | **Validate Request:** the system shall verify that the data is complete and valid before accepting the request. |
+| FR-06 | **Display Validation Errors:** if the data is incomplete or invalid, the system shall redisplay the page and identify and explain the errors. |
+| FR-07 | **Edit or Cancel Request:** the system shall let the employee correct the request data or cancel the request. |
+| FR-08 | **Submit Vacation Request:** the system shall allow submission once the request passes validation. |
 
-### 2.2 Non-Functional Requirements
+**B. Request processing**
 
-The use case does not specify measurable targets for every quality attribute. The following are proposed requirements that should be confirmed with stakeholders.
+| ID | Requirement |
+|----|-------------|
+| FR-09 | **Set Request Status:** on submission, the system shall set the request to *Pending Approval* if manager approval is required. |
+| FR-10 | **Notify Authorized Manager(s):** if approval is required, the system shall e-mail the manager(s) authorized to approve. |
+| FR-11 | **Access Request Through Portal or Email:** the system shall let the manager reach the VTS through a link in the e-mail, or by logging in to the Intranet and navigating to the system. |
+| FR-20 | **Handle Requests Not Requiring Approval:** if a request does not require approval, the system shall record it without the *Pending Approval* state, with the resulting status defined by the approved business rule. **TO CONFIRM** |
+
+**C. Manager: review and decision**
+
+| ID | Requirement |
+|----|-------------|
+| FR-12 | **View Pending Requests:** the system shall show the manager a separate section with pending requests from their direct reports. |
+| FR-13 | **Review Request Details:** the system shall let the manager select each request individually and view its details. |
+| FR-14 | **Approve Request:** the system shall let an authorized manager approve a request. |
+| FR-15 | **Reject Request:** the system shall let an authorized manager reject a request. |
+| FR-16 | **Provide Rejection Explanation:** the system shall require the manager to enter an explanation when rejecting. |
+| FR-17 | **Record Decision and Update Status:** the system shall record the decision and set the status to *Approved* or *Rejected*. |
+| FR-18 | **Notify Employee of Decision:** the system shall e-mail the employee with the approval or rejection. |
+| FR-19 | **Return Manager to Home Page:** after the decision is submitted, the system shall return the manager to the home page, where they can review other requests, submit their own, or leave the system. |
+| FR-21 | **Update Vacation Balance:** the system shall update the balance on approval and restore it on rejection or cancellation, per company policy. **TO CONFIRM** |
+| FR-22 | **Prevent Conflicting Decisions:** the system shall not allow a decision on a request that has already been decided. **TO CONFIRM** |
+
+### Non-Functional Requirements
 
 | ID | Category | Requirement |
-|---|---|---|
-| NFR-01 | Security | The system shall restrict access to authenticated users with appropriate permissions. |
-| NFR-02 | Privacy | Employees and managers shall only access information they are authorized to view. |
-| NFR-03 | Usability | The system shall provide a clear interface for viewing vacation information and selecting dates using a calendar. |
-| NFR-04 | Reliability | The system shall preserve submitted requests and recorded decisions consistently. |
-| NFR-05 | Performance | Common operations shall meet response-time targets agreed upon with stakeholders. |
-| NFR-06 | Availability | The system shall meet an availability target defined by the organization. |
-| NFR-07 | Maintainability | The system should be structured so that its components can be maintained and updated without unnecessary impact on unrelated functionality. |
+|----|----------|-------------|
+| NFR-01 | Security | Access to the system shall require authentication and appropriate authorization, performed through the existing Intranet Portal framework. |
 
-> Note: The response-time and availability targets must be defined before these requirements can be verified objectively.
+The scenario does not specify measurable targets for privacy, performance, availability, or reliability. These are tracked as open questions below rather than invented as requirements.
 
-### 2.3 Constraints
+### Constraints
 
-- **Existing Intranet Integration:** The VTS is accessed through the organization's existing intranet portal.
-- **Web-Based Application:** The proposed system is a web application.
-- **Portal Authentication:** The use case assumes that the employee has authenticated through the portal before accessing the VTS.
-- **Authorization:** Only authorized managers should review the relevant employees' vacation requests.
-- **Vacation Balance Rule:** An employee may select a vacation category only when its available balance is positive.
-- **Rejection Explanation:** A manager must provide an explanation when rejecting a request.
+| ID | Constraint | Description |
+|----|------------|-------------|
+| C-01 | Web application as an extension of the existing Intranet | The company chose to deliver the functionality as a web application that extends the current Intranet, so integration with the existing environment must be respected. |
+| C-02 | Existing Portal framework | The scenario assumes the Portal framework authenticates users, which may become an architectural constraint if the system must rely on it rather than replace it. |
 
-> The vacation balance rule and rejection explanation are business rules stated in the use case. They are included here as implementation constraints as well as functional rules.
+#### Business rules
+
+- Only vacation types with a positive balance can be selected.
+- The request description is limited to one paragraph.
+- A rejection must include an explanation.
+- Only an authorized manager can approve or reject a request.
+
+#### Assumptions
+
+- Employee data and employee-to-manager relationships are available to the system.
+- Vacation balances are up to date before a request is submitted.
+- An e-mail service is available.
+- A known policy defines vacation types and balance calculation rules.
+- Authorized manager(s) can be determined for each employee.
+
+#### Open questions
+
+| ID | Question |
+|----|----------|
+| Q-01 | With multiple authorized managers, is one approval enough or are all required? What happens on conflicting decisions? |
+| Q-02 | What is the status of a request that does not require approval, and what makes it so? |
+| Q-03 | Is the balance deducted on submission or on approval, and restored on rejection or cancellation? |
+| Q-04 to Q-07 | Privacy and data retention, performance, availability, and reliability targets. |
 
 ---
 
 ## 3. Domain (Problem Definition)
 
-The Vacation Tracking System addresses the difficulty of managing employee vacation time in an organization where employees may work on multiple projects and report to multiple managers.
+The domain is **employee time-off management inside a company**. Employees hold balances of different vacation types, request time off for specific days and hours, and managers decide on those requests.
 
-The system supports the following domain concepts:
+### Key concepts
 
-- Employees and their vacation balances.
-- Vacation categories.
-- Vacation requests containing titles, descriptions, dates, and requested hours.
-- Managers authorized to review requests.
-- Approval and rejection decisions.
-- Email notifications.
-- Integration with the organization's intranet portal.
+| Concept | Meaning |
+|---------|---------|
+| **Employee** | A person who holds vacation balances and can submit requests. Managers are also employees. |
+| **Manager** | An employee authorized to approve or reject requests of the employees they manage. An employee may have more than one manager. |
+| **Vacation Type** | A category of leave (for example annual leave) with its own balance. |
+| **Vacation Balance** | The remaining hours an employee has for a vacation type. |
+| **Vacation Request** | A request for one or more days, with hours per day, a title, and a description. |
+| **Request Status** | *Pending Approval*, *Approved*, or *Rejected*. |
+| **Decision** | A manager's approval or rejection, with a mandatory explanation on rejection. |
+| **Notification** | An e-mail sent to the manager(s) on submission and to the employee on decision. |
 
-The system manages the request lifecycle from submission and validation to manager review and notification of the decision.
+### Scope
 
-The approval policy, balance deduction rules, and processing of requests that do not require approval must be clarified with the organization before implementation.
+- **In scope:** viewing balances and requests, submitting and validating requests, notifying managers, reviewing and deciding, notifying employees.
+- **Out of scope (not specified):** payroll integration, reporting, and detailed vacation policy rules.
 
 ---
 
 ## 4. Actors
 
-### 4.1 Employee
-**Type:** Primary Actor
+| Actor | Type | Responsibilities |
+|-------|------|------------------|
+| **Employee** | Primary | Views requests and balances, selects vacation type, enters dates, hours, title, and description, corrects or cancels, and submits the request. |
+| **Manager (Authorized Manager)** | Primary | Receives the notification, opens the VTS, reviews pending requests, approves or rejects with an explanation. Also acts as an Employee for their own requests. |
+| **Email Service** | Secondary | Sends the approval-request e-mail to managers and the decision e-mail to the employee. |
+| **Intranet Portal / Authentication** | Secondary | Authenticates users and hosts the VTS as an Intranet extension. |
 
-The employee initiates the request process.
-
-Responsibilities:
-- Access the VTS through the intranet portal.
-- View vacation requests and balances.
-- Select a vacation category.
-- Enter requested dates, hours, title, and description.
-- Submit a request.
-- Correct validation errors or cancel a request.
-- Receive an email notification of the manager's decision.
-
-### 4.2 Manager
-**Type:** Supporting Actor in the request submission flow; primary actor for the review interaction.
-
-Responsibilities:
-- Access the VTS.
-- View pending requests from authorized employees.
-- Review individual requests.
-- Approve requests.
-- Reject requests and provide an explanation.
-- Return to the home page after handling a request.
-
-### 4.3 Email Service
-**Type:** External Supporting System
-
-Responsibilities:
-- Send approval notifications to authorized managers.
-- Send decision notifications to employees.
-
-The use case specifies email notifications but does not define the technical email implementation. Therefore, the Email Service is modeled as an external participant for diagramming purposes.
-
-### Systems That Are Not Necessarily Actors
-- **VTS:** The system being designed, represented as a system lifeline rather than an external actor.
-- **Intranet Portal:** The access point to the VTS. It can be modeled separately if the diagram includes interactions with the portal itself.
-- **Database:** An internal implementation component, not an actor in the original use case.
-- **Authentication Service:** Not explicitly defined as a separate external actor in the use case.
+> Actors are roles, not people: the same person can play both Employee and Manager.
 
 ---
 
 ## 5. Use Cases
 
-### 5.1 Use Case List
+```mermaid
+flowchart LR
+    Employee([Employee])
+    Manager([Manager])
+    Email([Email Service])
 
-| Use Case | Actor | Description |
-|---|---|---|
-| View Vacation Information | Employee | View vacation requests and balances. |
-| Submit Vacation Request | Employee | Create and submit a new vacation request. |
-| Correct or Cancel Request | Employee | Correct validation errors or cancel a request before successful submission. |
-| View Pending Requests | Manager | View requests awaiting the manager's review. |
-| Review Vacation Request | Manager | View the details of an individual request. |
-| Approve Vacation Request | Manager | Approve a request and record the decision. |
-| Reject Vacation Request | Manager | Reject a request and provide an explanation. |
-| Notify Manager | Email Service | Deliver a notification when approval is required. |
-| Notify Employee | Email Service | Deliver the final approval or rejection notification. |
-| Manage Time | Employee and Manager | Covers the request lifecycle, including submission, validation, review, decision, and notification. |
+    UC1((Manage Time))
+    UC2((View Vacation Information))
+    UC3((Review Pending Requests))
+    UC4((Approve or Reject Request))
 
-### 5.2 Use Case: Manage Time
+    Employee --- UC1
+    Employee --- UC2
+    Manager --- UC1
+    Manager --- UC2
+    Manager --- UC3
+    Manager --- UC4
+    Email --- UC1
+    Email --- UC4
+```
 
-**Use Case Name:** Manage Time
+| ID | Use Case | Primary Actor | Summary |
+|----|----------|---------------|---------|
+| UC-01 | **Manage Time** | Employee | Submit a new vacation request and follow it through review until the decision. |
+| UC-02 | View Vacation Information | Employee, Manager | See requests and balances for the last 6 to the next 18 months. |
+| UC-03 | Review Pending Requests | Manager | See and open the pending requests of direct reports. |
+| UC-04 | Approve or Reject Request | Manager | Decide on a request, with a mandatory explanation on rejection. |
 
-**Primary Actor:** Employee
+### UC-01: Manage Time
 
-**Supporting Actor:** Manager
+| Item | Description |
+|------|-------------|
+| **Use case name** | Manage Time |
+| **Actor** | Employee (primary); the Manager participates in review and decision |
+| **Goal** | The employee wishes to submit a new request for vacation time. |
+| **Preconditions** | The employee is authenticated through the Portal, the system knows their identity, and they are allowed to manage their own vacation requests. |
 
-**Goal:** The employee submits a new vacation request.
+**Main flow (optimistic):**
 
-#### Preconditions
-- The employee is authenticated through the intranet portal.
-- The employee has permission to manage their own vacation requests.
+1. The employee opens the VTS through a link in the Intranet Portal.
+2. The system shows current and past requests and remaining balances for the last 6 months up to 18 months ahead.
+3. The employee selects a vacation type with a balance greater than zero.
+4. The system asks for dates and hours and provides a visual calendar.
+5. The employee enters the dates, hours per day, a short title, and a description, then submits.
+6. The system validates the data (see alternate flow A1 on failure).
+7. When valid, the employee returns to the VTS home page.
+8. If approval is required, the system immediately e-mails the authorized manager(s).
+9. The request is set to *Pending Approval*.
+10. The manager opens the request through the e-mail link or by logging in to the Intranet and navigating to the VTS.
+11. The system may ask the manager to authenticate before granting access.
+12. The manager's home page shows their own requests and balances and a separate section of pending requests from direct reports. The manager selects one request.
+13. The system shows the details. The manager approves (status becomes *Approved*) or rejects with a required explanation (status becomes *Rejected*).
+14. The system e-mails the employee with the decision and returns the manager to the home page, where they can review more requests, submit their own, or exit.
 
-#### Main Flow
-1. The employee opens the VTS through the intranet portal.
-2. The system displays vacation requests and balances covering the previous six months through eighteen months into the future.
-3. The employee selects a vacation category with a positive balance.
-4. The system displays a calendar and request form.
-5. The employee enters the requested dates, hours for each date, a title, and a description.
-6. The employee submits the request.
-7. The system validates the submitted information.
-8. If validation fails, the system displays the errors and allows the employee to correct the information or cancel the request.
-9. If validation succeeds, the system saves the request and returns the employee to the home page.
-10. If approval is required, the system sets the status to `Pending Approval` and emails the authorized manager(s).
-11. The manager opens the request through the email link or the intranet portal and authenticates if required.
-12. The system displays the manager's vacation information and pending requests from authorized employees.
-13. The manager selects and reviews a request.
-14. The manager approves or rejects the request. A rejection requires an explanation.
-15. The system records the decision and changes the status to `Approved` or `Rejected`.
-16. The system emails the employee with the decision.
-17. The manager returns to the home page.
+**Alternate flows (pragmatic):**
 
-#### Alternative Flows
-
-**A. Validation Failure**
-1. The system identifies invalid or missing information.
-2. The system redisplays the form with errors.
-3. The employee edits and resubmits the request, or cancels it.
-
-**B. Request Approved**
-1. The manager approves the request.
-2. The system records the decision.
-3. The status becomes `Approved`.
-4. The system emails the employee.
-
-**C. Request Rejected**
-1. The manager rejects the request.
-2. The manager provides an explanation.
-3. The system records the decision.
-4. The status becomes `Rejected`.
-5. The system emails the employee.
-
-**D. Approval Not Required**
-The use case indicates that some requests may not require manager approval. The exact processing and final status for this path are not specified and must be defined by the organization.
-
-#### Postconditions
-- A valid request is recorded.
-- If approval is required, the request enters `Pending Approval`.
-- After a manager's decision, the status and decision are recorded.
-- The employee is notified of the decision by email.
+| ID | Condition | Behavior |
+|----|-----------|----------|
+| A1 | Data is incomplete, invalid, or fails validation (step 6) | The system redisplays the page with the errors identified and explained. The employee corrects the data or cancels the request. |
+| A2 | Manager rejects (step 13) | An explanation is mandatory before the decision is recorded. |
+| A3 | Request does not require approval (step 8) | Recorded without *Pending Approval*. **TO CONFIRM** (Q-02) |
+| A4 | Request already decided | The system shows the current status and does not allow a second decision. **TO CONFIRM** (Q-01) |
 
 ---
 
 ## 6. Entities (Data Model)
 
-The following is a proposed logical data model derived from the use case. Attribute types and implementation details should be refined during database design.
-
-### 6.1 Employee
-
-Represents employees and managers.
-
-| Attribute | Description |
-|---|---|
-| `employee_id` (PK) | Unique employee identifier |
-| `name` | Employee's name |
-| `email` | Employee's email address |
-| `portal_user_id` | Identifier associated with the intranet account |
-
-### 6.2 VacationCategory
-
-Represents available vacation categories.
-
-| Attribute | Description |
-|---|---|
-| `category_id` (PK) | Unique category identifier |
-| `category_name` | Name of the vacation category |
-
-### 6.3 VacationBalance
-
-Stores the available balance for an employee and a vacation category.
-
-| Attribute | Description |
-|---|---|
-| `balance_id` (PK) | Unique balance record identifier |
-| `employee_id` (FK) | References Employee |
-| `category_id` (FK) | References VacationCategory |
-| `available_hours` | Available vacation hours |
-
-### 6.4 VacationRequest
-
-Represents a vacation request submitted by an employee.
-
-| Attribute | Description |
-|---|---|
-| `request_id` (PK) | Unique request identifier |
-| `employee_id` (FK) | Employee who submitted the request |
-| `category_id` (FK) | Requested vacation category |
-| `title` | Short request title |
-| `description` | Request description |
-| `status` | Current request status |
-| `created_at` | Request submission timestamp |
-
-Possible statuses defined by the current use case:
-- `Pending Approval`
-- `Approved`
-- `Rejected`
-
-Additional statuses should only be introduced when the business rules require them.
-
-### 6.5 RequestDate
-
-Stores each date and the number of hours requested for that date.
-
-| Attribute | Description |
-|---|---|
-| `request_date_id` (PK) | Unique record identifier |
-| `request_id` (FK) | References VacationRequest |
-| `vacation_date` | Requested vacation date |
-| `requested_hours` | Number of hours requested on that date |
-
-### 6.6 RequestDecision
-
-Stores a manager's decision on a request.
-
-| Attribute | Description |
-|---|---|
-| `decision_id` (PK) | Unique decision identifier |
-| `request_id` (FK) | References VacationRequest |
-| `manager_id` (FK) | References Employee for the manager |
-| `decision` | `Approved` or `Rejected` |
-| `explanation` | Explanation required for rejection |
-| `decision_date` | Date and time of the decision |
-
-Multiple decision records may be required if the confirmed approval policy requires several managers to review the same request.
-
-### 6.7 EmployeeManager
-
-Represents the many-to-many relationship between employees and managers.
-
-| Attribute | Description |
-|---|---|
-| `employee_id` (PK, FK) | References the employee |
-| `manager_id` (PK, FK) | References a manager represented by an Employee record |
-
-This relationship is needed because an employee may report to more than one manager.
-
-### 6.8 Entity Relationship Diagram
-
 ```mermaid
 erDiagram
+    EMPLOYEE ||--o{ EMPLOYEE_MANAGER : "reports to (employee)"
+    EMPLOYEE ||--o{ EMPLOYEE_MANAGER : "manages (manager)"
+    EMPLOYEE ||--o{ VACATION_BALANCE : has
+    VACATION_TYPE ||--o{ VACATION_BALANCE : "applies to"
     EMPLOYEE ||--o{ VACATION_REQUEST : submits
-    VACATION_CATEGORY ||--o{ VACATION_REQUEST : classifies
-    EMPLOYEE ||--o{ VACATION_BALANCE : owns
-    VACATION_CATEGORY ||--o{ VACATION_BALANCE : defines
-    VACATION_REQUEST ||--|{ REQUEST_DATE : contains
-    VACATION_REQUEST ||--o{ REQUEST_DECISION : receives
-    EMPLOYEE ||--o{ REQUEST_DECISION : makes
-    EMPLOYEE ||--o{ EMPLOYEE_MANAGER : has
-    EMPLOYEE ||--o{ EMPLOYEE_MANAGER : manages
+    VACATION_TYPE ||--o{ VACATION_REQUEST : "categorizes"
+    VACATION_REQUEST ||--|{ VACATION_REQUEST_DAY : "spans"
+    VACATION_REQUEST ||--o{ REQUEST_DECISION : "receives"
+    EMPLOYEE ||--o{ REQUEST_DECISION : "decides (manager)"
+    VACATION_REQUEST ||--o{ NOTIFICATION : triggers
+    EMPLOYEE ||--o{ NOTIFICATION : "receives (recipient)"
 
     EMPLOYEE {
-        int employee_id PK
+        int employeeId PK
         string name
         string email
-        string portal_user_id
     }
-
-    VACATION_CATEGORY {
-        int category_id PK
-        string category_name
+    EMPLOYEE_MANAGER {
+        int employeeId PK, FK
+        int managerId PK, FK
+        boolean canApprove
     }
-
+    VACATION_TYPE {
+        int typeId PK
+        string name
+    }
     VACATION_BALANCE {
-        int balance_id PK
-        int employee_id FK
-        int category_id FK
-        decimal available_hours
+        int balanceId PK
+        int employeeId FK
+        int typeId FK
+        decimal remainingHours
     }
-
     VACATION_REQUEST {
-        int request_id PK
-        int employee_id FK
-        int category_id FK
+        int requestId PK
+        int employeeId FK
+        int typeId FK
         string title
         string description
         string status
-        datetime created_at
+        datetime submittedAt
     }
-
-    REQUEST_DATE {
-        int request_date_id PK
-        int request_id FK
-        date vacation_date
-        decimal requested_hours
+    VACATION_REQUEST_DAY {
+        int dayId PK
+        int requestId FK
+        date vacationDate
+        decimal hours
     }
-
     REQUEST_DECISION {
-        int decision_id PK
-        int request_id FK
-        int manager_id FK
+        int decisionId PK
+        int requestId FK
+        int managerId FK
         string decision
-        string explanation
-        datetime decision_date
+        string rejectionReason
+        datetime decidedAt
     }
-
-    EMPLOYEE_MANAGER {
-        int employee_id PK, FK
-        int manager_id PK, FK
+    NOTIFICATION {
+        int notificationId PK
+        int requestId FK
+        int recipientId FK
+        string type
+        datetime sentAt
     }
 ```
 
-### 6.9 Main Relationships
-- One employee can submit many vacation requests.
-- One vacation category can be associated with many requests.
-- One employee can have multiple vacation balance records.
-- One vacation request can contain multiple requested dates.
-- One request can receive one or more decision records, depending on the approval policy.
-- An employee can report to multiple managers, and a manager can manage multiple employees.
+| Entity | Purpose |
+|--------|---------|
+| **Employee** | A person in the company; managers are employees too. |
+| **EmployeeManager** | Many-to-many link between an employee and their managers, with an approval flag. |
+| **VacationType** | A category of leave. |
+| **VacationBalance** | Remaining hours of a vacation type for an employee. |
+| **VacationRequest** | The request; `status` is one of `PENDING_APPROVAL`, `APPROVED`, `REJECTED`. |
+| **VacationRequestDay** | One day of a request with the hours requested for that day. |
+| **RequestDecision** | A manager's decision, with a required `rejectionReason` when rejecting. |
+| **Notification** | An e-mail sent to a manager (approval request) or an employee (decision). |
+
+> `EmployeeManager`, `RequestDecision`, and `Notification` are derived from the requirements (multiple managers, recording decisions and explanations, e-mail notifications) rather than stated explicitly in the scenario.
 
 ---
 
@@ -400,41 +314,38 @@ erDiagram
 
 ```mermaid
 flowchart TD
-    A([Start]) --> B[Employee opens VTS through Intranet Portal]
-    B --> C[Display vacation requests and balances]
-    C --> D[Select category and enter dates, hours, title, and description]
-    D --> E[Submit request]
-    E --> F{Request data valid?}
+    subgraph EMP["Employee phase: submit request"]
+        S([Start]) --> A1["Employee opens VTS from Intranet Portal"]
+        A1 --> A2["System shows requests and balances<br/>(last 6 to next 18 months)"]
+        A2 --> A3["Select vacation type<br/>(balance greater than 0)"]
+        A3 --> A4["Enter dates, hours, title, description<br/>and submit"]
+        A4 --> D1{"Data valid?"}
+        D1 -- No --> E1["Show errors"]
+        E1 -- Employee corrects data --> A4
+        E1 -- Cancel --> X1([End: cancelled])
+        D1 -- Yes --> A5["Return to VTS home page"]
+        A5 --> D2{"Approval required?"}
+        D2 -- No --> N1["Record without approval<br/>(rule TO CONFIRM)"]
+        N1 --> X2([End])
+        D2 -- Yes --> A6["Status = Pending Approval<br/>E-mail authorized manager(s)"]
+    end
 
-    F -- No --> G[Display validation errors]
-    G --> H{Edit or cancel?}
-    H -- Edit --> D
-    H -- Cancel --> I[Return to home page]
-    I --> Z([End])
+    subgraph MGR["Manager phase: review and decide"]
+        B1["Manager opens VTS<br/>(e-mail link or Intranet Portal)"]
+        B1 --> B2["Verify identity<br/>(login if required)"]
+        B2 --> B3["Review pending list,<br/>select request, view details"]
+        B3 --> D3{"Approve?"}
+        D3 -- Yes --> B4["Status = Approved"]
+        D3 -- No --> B5["Enter rejection explanation<br/>(required)"]
+        B5 --> B6["Status = Rejected"]
+        B4 --> B7["Send decision e-mail to employee"]
+        B6 --> B7
+        B7 --> B8["Manager returns to home page"]
+        B8 --> X3([End])
+    end
 
-    F -- Yes --> J[Save vacation request]
-    J --> K{Approval required?}
-
-    K -- No --> L[Process according to vacation policy]
-    L --> Z
-
-    K -- Yes --> M[Set status to Pending Approval]
-    M --> N[Email authorized manager or managers]
-    N --> O[Manager opens VTS and views pending requests]
-    O --> P[Manager reviews request]
-    P --> Q{Approve request?}
-
-    Q -- Yes --> R[Set status to Approved]
-    Q -- No --> S[Enter rejection explanation]
-    S --> T[Set status to Rejected]
-
-    R --> U[Email decision to employee]
-    T --> U
-    U --> V[Manager returns to home page]
-    V --> Z
+    A6 --> B1
 ```
-
-**Note:** The path for requests that do not require approval is left at a policy-processing step because the original use case does not define the exact status or processing rules for that path.
 
 ---
 
@@ -442,59 +353,42 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
-    actor Employee
-    participant VTS as Vacation Tracking System
-    participant Email as Email Service
-    actor Manager
+    actor E as Employee
+    participant V as VTS
+    participant M as Email Service
+    actor G as Manager
 
-    Employee->>VTS: Open VTS through Intranet Portal
-    VTS-->>Employee: Display vacation requests and balances
-    Employee->>VTS: Select vacation category
-    VTS-->>Employee: Display calendar and request form
-    Employee->>VTS: Enter dates, hours, title, description
-    Employee->>VTS: Submit request
-    VTS->>VTS: Validate request
+    E->>V: 1. Open VTS from Intranet Portal link
+    V-->>E: 2. Show requests and balances (-6 to +18 months)
+    E->>V: 3. Select vacation type (balance > 0)
+    V-->>E: 4. Show visual calendar
+    E->>V: 5. Submit dates, hours, title, description
+    V->>V: 6. Validate request
 
-    alt Validation fails
-        VTS-->>Employee: Display validation errors
-        alt Employee edits request
-            Employee->>VTS: Correct details and resubmit
-            VTS->>VTS: Validate again
-        else Employee cancels
-            Employee->>VTS: Cancel request
-            VTS-->>Employee: Return to home page
-        end
-    else Validation succeeds
-        VTS->>VTS: Save request
-        VTS-->>Employee: Return to home page
-
-        opt Approval is required
-            VTS->>VTS: Set status to Pending Approval
-            VTS->>Email: Send approval notification
-            Email-->>Manager: Deliver request notification
-            Manager->>VTS: Open request through link or portal
-
-            opt Authentication is required
-                VTS-->>Manager: Request authentication
-                Manager->>VTS: Submit credentials
-                VTS-->>Manager: Grant access
-            end
-
-            VTS-->>Manager: Display pending requests
-            Manager->>VTS: Select and review request
-            VTS-->>Manager: Display request details
-
+    alt Data incomplete or invalid
+        V-->>E: 6. Redisplay page with errors
+        E->>V: 7. Correct data or cancel
+    else Data valid
+        V-->>E: 8. Return to VTS home page
+        opt Approval required
+            V->>M: 8. Send approval e-mail
+            V->>V: 9. Status = Pending Approval
+            M-->>G: 8. E-mail with request link
+            G->>V: 10. Open link (e-mail or Intranet Portal)
+            V-->>G: 11. Verify identity / login if required
+            V-->>G: 12. Home: own requests + pending requests
+            G->>V: 12. Select a request
+            V-->>G: 13. Show request details
             alt Manager approves
-                Manager->>VTS: Approve request
-                VTS->>VTS: Set status to Approved
+                G->>V: 13. Approve
+                V->>V: Status = Approved
             else Manager rejects
-                Manager->>VTS: Reject with explanation
-                VTS->>VTS: Set status to Rejected
+                G->>V: 13. Reject + rejection explanation
+                V->>V: Status = Rejected
             end
-
-            VTS->>Email: Send decision notification
-            Email-->>Employee: Deliver approval/rejection email
-            VTS-->>Manager: Return to manager home page
+            V->>M: 14. Send decision e-mail
+            M-->>E: 14. Approved / Rejected notification
+            V-->>G: 14. Return to home page
         end
     end
 ```
@@ -503,107 +397,95 @@ sequenceDiagram
 
 ## 9. Pseudocode
 
-### 9.1 Submit Vacation Request
+Lines marked `TO CONFIRM` are assumptions that need validation against the case study.
+
+### Main procedure
 
 ```text
-PROCEDURE SubmitVacationRequest(employee)
-
-    DISPLAY employee's vacation requests and balances
-
-    INPUT vacation category
-
-    IF employee's balance for category <= 0 THEN
-        DISPLAY "No available balance for this category"
-        RETURN
-    END IF
-
-    REPEAT
-        DISPLAY calendar and request form
-
-        INPUT requested dates
-        INPUT requested hours for each date
-        INPUT request title
-        INPUT request description
-
-        VALIDATE request data
-
-        IF request data is invalid THEN
-            DISPLAY validation errors
-            INPUT employee choice: Edit or Cancel
-
-            IF choice = Cancel THEN
-                RETURN to home page
-                EXIT PROCEDURE
-            END IF
-        END IF
-
-    UNTIL request data is valid
-
-    SAVE vacation request
-
-    IF approval is required THEN
-        SET request status = "Pending Approval"
-
-        FIND authorized manager(s)
-        SEND approval notification to manager(s)
-    ELSE
-        PROCESS according to the organization's vacation policy
-    END IF
-
-    RETURN employee to home page
-
+PROCEDURE ManageTime(employee)
+  REQUIRE employee.isAuthenticated()              // precondition
+  showDashboard(employee)                         // steps 1-2
+  request <- createRequest(employee)              // steps 3-7
+  IF request = NULL THEN RETURN                   // employee cancelled
+  request.submittedAt <- now()
+  IF approvalRequired(request) THEN               // step 8
+    managers <- getAuthorizedManagers(employee)
+    request.status <- PENDING_APPROVAL            // step 9
+    saveRequest(request)
+    sendEmail(managers, requestLink(request))
+  ELSE
+    recordWithoutApproval(request)                // TO CONFIRM (Q-02)
+  END IF
 END PROCEDURE
 ```
 
-### 9.2 Review Vacation Request
+### Dashboard (steps 1-2)
 
 ```text
-PROCEDURE ReviewVacationRequest(manager, request)
-
-    VERIFY manager is authorized to review request
-
-    DISPLAY manager's vacation information
-    DISPLAY pending requests from authorized employees
-
-    SELECT request
-    DISPLAY request details
-
-    INPUT manager decision
-
-    IF decision = "Approve" THEN
-
-        SET request status = "Approved"
-
-    ELSE IF decision = "Reject" THEN
-
-        REPEAT
-            INPUT rejection explanation
-        UNTIL explanation is not empty
-
-        SET request status = "Rejected"
-
-    END IF
-
-    SAVE manager decision and request status
-
-    SEND decision notification to employee
-
-    RETURN manager to home page
-
+PROCEDURE showDashboard(employee)
+  from <- today() - 6 MONTHS
+  to   <- today() + 18 MONTHS
+  requests <- findRequests(employee, from, to)
+  balances <- findBalances(employee)
+  display(requests, balances)
 END PROCEDURE
 ```
 
----
+### Create and validate a request (steps 3-8)
 
-## Open Questions Before Implementation
+```text
+FUNCTION createRequest(employee)
+  types <- balances WHERE remainingHours > 0      // step 3
+  type  <- employee.chooses(types)
+  LOOP
+    days  <- calendar.select(dates, hoursPerDay)  // steps 4-5
+    title <- input(); description <- input()
+    action <- employee.chooses(SUBMIT, CANCEL)
+    IF action = CANCEL THEN RETURN NULL
+    request <- newRequest(employee, type, days, title, description)
+    errors <- validate(request)                   // step 6
+    IF errors is empty THEN RETURN request        // step 8
+    display(errors)                               // employee corrects (step 7)
+  END LOOP
+END FUNCTION
 
-The following decisions require confirmation from the organization:
+FUNCTION validate(request)
+  errors <- empty list
+  IF request.days is empty THEN add "dates required"
+  FOR EACH day IN request.days
+    IF day.hours <= 0 THEN add "hours must be positive"
+  IF request.title is empty THEN add "title required"
+  IF request.description has more than one paragraph
+    THEN add "description too long"
+  IF totalHours(request) > balance(request.type)
+    THEN add "insufficient balance"               // TO CONFIRM
+  RETURN errors
+END FUNCTION
+```
 
-1. What happens to requests that do not require manager approval?
-2. Does one manager make the final decision after consulting other managers, or must multiple managers approve the request?
-3. When should vacation balances be reduced or restored?
-4. What validation rules apply to working days, working hours, overlapping requests, and available balances?
-5. What are the required security, privacy, performance, and availability targets?
-6. Which existing company systems must integrate with the VTS?
+### Manager review and decision (steps 10-14)
 
-These points are documented as open questions rather than assumed behavior.
+```text
+PROCEDURE reviewRequests(manager)
+  authenticate(manager)                           // steps 10-11
+  pending <- findRequests(status = PENDING_APPROVAL, approver = manager)
+  display(ownRequests(manager), balances(manager), pending)   // step 12
+  request <- manager.selects(pending)
+  display(request.details)                        // step 13
+  IF request.status <> PENDING_APPROVAL THEN
+    display("Already decided"); RETURN            // TO CONFIRM (Q-01)
+  END IF
+  decision <- manager.chooses(APPROVE, REJECT)
+  IF decision = APPROVE THEN
+    request.status <- APPROVED
+  ELSE
+    reason <- manager.enterReason()               // mandatory
+    WHILE reason is empty: reason <- manager.enterReason()
+    request.status <- REJECTED
+  END IF
+  saveDecision(request, manager, decision, reason, now())
+  updateBalance(request)                          // TO CONFIRM (Q-03)
+  sendEmail(request.employee, decision, reason)   // step 14
+  goToHomePage(manager)
+END PROCEDURE
+```
