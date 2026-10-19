@@ -369,19 +369,8 @@ sequenceDiagram
 
 ## Pseudocode
 
-The pseudocode follows clean code and design best practices. Open business questions are isolated in named policy functions (`approvalRequired`, `statusWithoutApproval`, `allowancePolicy`) so they can be settled without touching the flow.
+The pseudocode follows clean code and design best practices.
 
-| Practice | How it is applied |
-|----------|-------------------|
-| **Single responsibility** | Each function does one job. The flow (use case), validation, persistence, notification, and audit logging are separate. |
-| **Meaningful names, no magic values** | Enums and named constants replace raw strings and numbers. |
-| **Guard clauses** | Preconditions are checked first and fail fast, which keeps the main path flat. |
-| **Open/closed validation** | Each rule is a small object. New HR rules are added without editing the validator. |
-| **Explicit errors** | Domain errors (`AlreadyDecidedError`, `NotAuthorizedError`) are raised and handled at the edge, not signalled with flags. |
-| **Transactions** | State changes, decision records, balance updates, and audit entries commit together. |
-| **Side effects after commit** | E-mails are sent only after the transaction succeeds, and a mail failure never undoes a decision. |
-| **Separation of UI and logic** | `display` and `read` calls stay in the use-case procedures. Services contain no UI. |
-| **Dependency injection** | Services receive repositories and gateways instead of creating them. |
 
 ### Constants, enums, and errors
 
