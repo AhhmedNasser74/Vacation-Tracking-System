@@ -73,6 +73,7 @@ The main use cases are as follows.
 	- Provide access to vacation request history for the previous calendar year.
 	- Show the employee, when they open the system, their requests and leave balances for the last 6 months up to 18 months ahead.
 	- Let the employee choose only a leave category with a positive balance.
+	- Inform the employee when no leave category has a positive balance.
 	- Let the employee select one or more days and the number of hours for each day, using a visual calendar to choose and compare dates.
 	- Let the employee enter a short title and a description limited to one paragraph.
 	- Validate each request before it is accepted: required data is present, hours are positive, dates are within the 1.5-year window, title and description limits are met, HR-defined location and leave category rules are satisfied, and the balance is sufficient (balance check to be confirmed).
@@ -89,6 +90,7 @@ The main use cases are as follows.
 	- Show the manager their own requests and balances, and a separate section for pending requests from subordinates. Let the manager select each request individually and view its details.
 	- Let an authorized manager approve or reject a request. A rejection requires an explanation.
 	- Include the decision and, for a rejection, the explanation in the email sent to the employee.
+	- If an email cannot be sent, retry and log the failure without blocking the request or the decision.
 	- Record each decision with the deciding manager and the time, and update the request status.
 	- Do not allow a decision on a request that has already been decided (to be confirmed).
 	- Update the employee's leave balance after a decision according to company policy (to be confirmed).
@@ -367,101 +369,278 @@ sequenceDiagram
 
 ## Pseudocode
 
-Lines marked `TO CONFIRM` are assumptions that need validation against the detailed use case.
+The pseudocode follows clean code and design best practices. Open business questions are isolated in named policy functions (`approvalRequired`, `statusWithoutApproval`, `allowancePolicy`) so they can be settled without touching the flow.
 
-### Manage Time
+| Practice | How it is applied |
+|----------|-------------------|
+| **Single responsibility** | Each function does one job. The flow (use case), validation, persistence, notification, and audit logging are separate. |
+| **Meaningful names, no magic values** | Enums and named constants replace raw strings and numbers. |
+| **Guard clauses** | Preconditions are checked first and fail fast, which keeps the main path flat. |
+| **Open/closed validation** | Each rule is a small object. New HR rules are added without editing the validator. |
+| **Explicit errors** | Domain errors (`AlreadyDecidedError`, `NotAuthorizedError`) are raised and handled at the edge, not signalled with flags. |
+| **Transactions** | State changes, decision records, balance updates, and audit entries commit together. |
+| **Side effects after commit** | E-mails are sent only after the transaction succeeds, and a mail failure never undoes a decision. |
+| **Separation of UI and logic** | `display` and `read` calls stay in the use-case procedures. Services contain no UI. |
+| **Dependency injection** | Services receive repositories and gateways instead of creating them. |
+
+### Constants, enums, and errors
 
 ```text
-PROCEDURE ManageTime(employee)
-  REQUIRE employee.isAuthenticated()
+ENUM RequestStatus      = PENDING_APPROVAL | APPROVED | REJECTED
+ENUM Decision           = APPROVE | REJECT
+ENUM NotificationType   = APPROVAL_REQUESTED | DECISION_MADE
+ENUM AuditAction        = SUBMIT_REQUEST | APPROVE | REJECT | EMAIL_FAILED
+
+CONSTANT DASHBOARD_MONTHS_BACK       = 6
+CONSTANT MAX_ADVANCE_MONTHS          = 18
+CONSTANT MAX_DESCRIPTION_PARAGRAPHS  = 1
+CONSTANT MAX_EMAIL_ATTEMPTS          = 3
+
+ERROR AlreadyDecidedError
+ERROR NotAuthorizedError
+ERROR MissingRejectionReasonError
+```
+
+### Employee flow (use case)
+
+```text
+PROCEDURE manageTime(employee)
+  ensureAuthenticated(employee)
   showDashboard(employee)
-  request <- createRequest(employee)
-  IF request = NULL THEN RETURN
-  request.submittedAt <- now()
-  logActivity(employee, "SUBMIT_REQUEST", request)
-  IF approvalRequired(request) THEN
-    managers <- getAuthorizedManagers(employee)
-    request.status <- PENDING_APPROVAL
-    saveRequest(request)
-    sendEmail(managers, requestLink(request))
-  ELSE
-    recordWithoutApproval(request)
-  END IF
+
+  draft <- collectRequestDraft(employee)
+  IF draft = NULL THEN RETURN
+
+  requestService.submit(employee, draft)
+  goToHomePage(employee)
+END PROCEDURE
+
+PROCEDURE ensureAuthenticated(user)
+  IF NOT portal.isAuthenticated(user) THEN
+    RAISE NotAuthorizedError
 END PROCEDURE
 ```
 
-### Show the employee dashboard
+### Dashboard and history
 
 ```text
 PROCEDURE showDashboard(employee)
-  from <- today() - 6 MONTHS
-  to   <- today() + 18 MONTHS
-  requests <- findRequests(employee, from, to)
-  balances <- findAllowances(employee)
-  display(requests, balances)
+  window <- DateRange(
+              from = today() - DASHBOARD_MONTHS_BACK months,
+              to   = today() + MAX_ADVANCE_MONTHS months)
+
+  display(requestRepository.findByEmployee(employee, window))
+  display(allowanceRepository.findByEmployee(employee))
+END PROCEDURE
+
+PROCEDURE showHistory(employee)
+  display(requestRepository.findByEmployee(employee, previousCalendarYear()))
 END PROCEDURE
 ```
 
-### Create and validate a request
+### Collecting and validating a draft
 
 ```text
-FUNCTION createRequest(employee)
-  categories <- allowances WHERE remainingHours > 0
-  category   <- employee.chooses(categories)
+FUNCTION collectRequestDraft(employee) -> RequestDraft OR NULL
+  category <- chooseCategory(employee)
+  IF category = NULL THEN RETURN NULL
+
   LOOP
-    days  <- calendar.select(dates, hoursPerDay)
-    title <- input(); description <- input()
-    action <- employee.chooses(SUBMIT, CANCEL)
-    IF action = CANCEL THEN RETURN NULL
-    request <- newRequest(employee, category, days, title, description)
-    errors <- validate(request)
-    IF errors is empty THEN RETURN request
-    display(errors)
+    draft <- readDraftFromForm(category)
+    IF draft.action = CANCEL THEN RETURN NULL
+
+    result <- requestValidator.validate(draft, employee)
+    IF result.isValid THEN RETURN draft
+
+    display(result.errors)
   END LOOP
 END FUNCTION
 
-FUNCTION validate(request)
-  errors <- empty list
-  IF request.days is empty THEN add "dates required"
-  FOR EACH day IN request.days
-    IF day.hours <= 0 THEN add "hours must be positive"
-    IF day.date > today() + 18 MONTHS THEN add "too far in advance"
-  IF request.title is empty THEN add "title required"
-  IF request.description has more than one paragraph
-    THEN add "description too long"
-  rules <- findRules(employee.location, request.category)
-  FOR EACH rule IN rules
-    IF NOT rule.isSatisfiedBy(request) THEN add rule.message
-  IF totalHours(request) > remainingHours(request)
-    THEN add "insufficient balance"
-  RETURN errors
+FUNCTION chooseCategory(employee) -> LeaveCategory OR NULL
+  categories <- allowanceRepository.categoriesWithBalance(employee)
+  IF categories is empty THEN
+    display("No leave category has a positive balance")
+    RETURN NULL
+  RETURN employee.chooses(categories)
 END FUNCTION
 ```
 
-### Manager review and decision
+```text
+INTERFACE ValidationRule
+  FUNCTION check(draft, employee) -> LIST<ValidationError>
+
+CLASS RequestValidator
+  CONSTRUCTOR(builtInRules, ruleRepository)
+
+  FUNCTION validate(draft, employee) -> ValidationResult
+    rules  <- builtInRules + hrRulesFor(employee, draft.category)
+    errors <- flatten(FOR EACH rule IN rules: rule.check(draft, employee))
+    RETURN ValidationResult(errors)
+
+  FUNCTION hrRulesFor(employee, category)
+    RETURN ruleRepository.find(employee.location, category)
+END CLASS
+
+CLASS DatesRequiredRule IMPLEMENTS ValidationRule
+  FUNCTION check(draft, employee)
+    IF draft.days is empty THEN RETURN [error("Dates are required")]
+    RETURN []
+
+CLASS PositiveHoursRule IMPLEMENTS ValidationRule
+  FUNCTION check(draft, employee)
+    RETURN [error(day, "Hours must be positive")
+            FOR EACH day IN draft.days WHERE day.hours <= 0]
+
+CLASS AdvanceLimitRule IMPLEMENTS ValidationRule
+  FUNCTION check(draft, employee)
+    limit <- today() + MAX_ADVANCE_MONTHS months
+    RETURN [error(day, "Too far in advance")
+            FOR EACH day IN draft.days WHERE day.date > limit]
+
+CLASS TitleRequiredRule IMPLEMENTS ValidationRule
+  FUNCTION check(draft, employee)
+    IF isBlank(draft.title) THEN RETURN [error("Title is required")]
+    RETURN []
+
+CLASS DescriptionLengthRule IMPLEMENTS ValidationRule
+  FUNCTION check(draft, employee)
+    IF paragraphCount(draft.description) > MAX_DESCRIPTION_PARAGRAPHS
+      THEN RETURN [error("Description must be one paragraph")]
+    RETURN []
+
+CLASS SufficientBalanceRule IMPLEMENTS ValidationRule
+  FUNCTION check(draft, employee)
+    available <- allowanceRepository.remainingHours(employee, draft.category)
+    IF draft.totalHours() > available
+      THEN RETURN [error("Insufficient balance")]
+    RETURN []
+```
+
+### Submitting a request
 
 ```text
-PROCEDURE reviewRequests(manager)
-  authenticate(manager)
-  pending <- findRequests(status = PENDING_APPROVAL, approver = manager)
-  display(ownRequests(manager), allowances(manager), pending)
-  request <- manager.selects(pending)
+CLASS RequestService
+  CONSTRUCTOR(requestRepository, auditLog, notificationService)
+
+  FUNCTION submit(employee, draft) -> LeaveRequest
+    request <- LeaveRequest.from(employee, draft, now())
+    request.status <- initialStatusFor(request)
+
+    TRANSACTION
+      requestRepository.save(request)
+      auditLog.record(employee, SUBMIT_REQUEST, request)
+    END TRANSACTION
+
+    IF request.status = PENDING_APPROVAL THEN
+      notificationService.notifyApprovers(request)
+    RETURN request
+
+  FUNCTION initialStatusFor(request) -> RequestStatus
+    IF approvalRequired(request) THEN RETURN PENDING_APPROVAL
+    RETURN statusWithoutApproval(request)
+END CLASS
+```
+
+### Manager flow (use case)
+
+```text
+PROCEDURE reviewPendingRequests(manager)
+  ensureAuthenticated(manager)
+  showManagerHome(manager)
+
+  request <- manager.selectsFrom(requestRepository.pendingFor(manager))
+  IF request = NULL THEN RETURN
+
   display(request.details)
-  IF request.status <> PENDING_APPROVAL THEN
-    display("Already decided"); RETURN
-  END IF
-  decision <- manager.chooses(APPROVE, REJECT)
-  IF decision = APPROVE THEN
-    request.status <- APPROVED
-  ELSE
-    reason <- manager.enterReason()
-    WHILE reason is empty: reason <- manager.enterReason()
-    request.status <- REJECTED
-  END IF
-  saveDecision(request, manager, decision, reason, now())
-  logActivity(manager, decision, request)
-  updateAllowance(request)
-  sendEmail(request.employee, decision, reason)
+  decision <- readDecision()
+  reason   <- IF decision = REJECT THEN readRejectionReason() ELSE NULL
+
+  TRY
+    approvalService.decide(manager, request.id, decision, reason)
+  CATCH AlreadyDecidedError
+    display(currentStatusOf(request.id))
+  CATCH NotAuthorizedError
+    display("You cannot decide this request")
+  CATCH MissingRejectionReasonError
+    display("A rejection requires an explanation")
+
   goToHomePage(manager)
 END PROCEDURE
+
+PROCEDURE showManagerHome(manager)
+  display(requestRepository.findByEmployee(manager, defaultWindow()))
+  display(allowanceRepository.findByEmployee(manager))
+  display(requestRepository.pendingFor(manager))
+END PROCEDURE
+```
+
+### Deciding a request
+
+```text
+CLASS ApprovalService
+  CONSTRUCTOR(requestRepository, decisionRepository, allowancePolicy,
+              auditLog, notificationService)
+
+  FUNCTION decide(manager, requestId, decision, reason) -> LeaveRequest
+    request <- requestRepository.getForUpdate(requestId)
+
+    ensureAuthorizedApprover(manager, request)
+    ensureStillPending(request)
+    ensureReasonWhenRejecting(decision, reason)
+
+    TRANSACTION
+      request.status <- statusFor(decision)
+      requestRepository.save(request)
+      decisionRepository.save(Decision(request, manager, decision, reason, now()))
+      allowancePolicy.apply(request)
+      auditLog.record(manager, auditActionFor(decision), request)
+    END TRANSACTION
+
+    notificationService.notifyEmployee(request, decision, reason)
+    RETURN request
+
+  FUNCTION ensureAuthorizedApprover(manager, request)
+    IF NOT managerDirectory.isApproverOf(manager, request.employee) THEN
+      RAISE NotAuthorizedError
+
+  FUNCTION ensureStillPending(request)
+    IF request.status <> PENDING_APPROVAL THEN
+      RAISE AlreadyDecidedError
+
+  FUNCTION ensureReasonWhenRejecting(decision, reason)
+    IF decision = REJECT AND isBlank(reason) THEN
+      RAISE MissingRejectionReasonError
+
+  FUNCTION statusFor(decision) -> RequestStatus
+    IF decision = APPROVE THEN RETURN APPROVED
+    RETURN REJECTED
+END CLASS
+```
+
+### Notifications and audit
+
+```text
+CLASS NotificationService
+  CONSTRUCTOR(emailGateway, managerDirectory, notificationRepository, auditLog)
+
+  FUNCTION notifyApprovers(request)
+    FOR EACH manager IN managerDirectory.approversOf(request.employee)
+      sendWithRetry(manager, APPROVAL_REQUESTED, requestLink(request), request)
+
+  FUNCTION notifyEmployee(request, decision, reason)
+    content <- DecisionMessage(decision, reason, requestLink(request))
+    sendWithRetry(request.employee, DECISION_MADE, content, request)
+
+  FUNCTION sendWithRetry(recipient, type, content, request)
+    FOR attempt FROM 1 TO MAX_EMAIL_ATTEMPTS
+      IF emailGateway.send(recipient.email, type, content) THEN
+        notificationRepository.save(recipient, type, request, now())
+        RETURN
+    auditLog.record(SYSTEM, EMAIL_FAILED, request)
+END CLASS
+
+CLASS AuditLog
+  FUNCTION record(actor, action, entity)
+    logRepository.append(actor.accountId, action, entity.type, entity.id, now())
+END CLASS
 ```
