@@ -63,7 +63,6 @@ The main use cases are as follows.
 
 <img src="./<img width="1100" height="800" alt="usecase-diagram drawio" src="https://github.com/user-attachments/assets/dd4e3c0e-d6a3-42ed-9348-de134cb22647" />
 
-| --------------------------------------------------------------- |
 
 ## Requirements 
 
@@ -338,19 +337,19 @@ Lines marked `TO CONFIRM` are assumptions that need validation against the detai
 
 ```text
 PROCEDURE ManageTime(employee)
-  REQUIRE employee.isAuthenticated()              // via the SSO portal
-  showDashboard(employee)                         // steps 1-2
-  request <- createRequest(employee)              // steps 3-7
-  IF request = NULL THEN RETURN                   // employee cancelled
+  REQUIRE employee.isAuthenticated()              
+  showDashboard(employee)                         
+  request <- createRequest(employee)              
+  IF request = NULL THEN RETURN                   
   request.submittedAt <- now()
   logActivity(employee, "SUBMIT_REQUEST", request)
-  IF approvalRequired(request) THEN               // step 8
+  IF approvalRequired(request) THEN               
     managers <- getAuthorizedManagers(employee)
-    request.status <- PENDING_APPROVAL            // step 9
+    request.status <- PENDING_APPROVAL            
     saveRequest(request)
     sendEmail(managers, requestLink(request))
   ELSE
-    recordWithoutApproval(request)                // TO CONFIRM
+    recordWithoutApproval(request)                
   END IF
 END PROCEDURE
 ```
@@ -371,17 +370,17 @@ END PROCEDURE
 
 ```text
 FUNCTION createRequest(employee)
-  categories <- allowances WHERE remainingHours > 0   // step 3
+  categories <- allowances WHERE remainingHours > 0   
   category   <- employee.chooses(categories)
   LOOP
-    days  <- calendar.select(dates, hoursPerDay)      // steps 4-5
+    days  <- calendar.select(dates, hoursPerDay)      
     title <- input(); description <- input()
     action <- employee.chooses(SUBMIT, CANCEL)
     IF action = CANCEL THEN RETURN NULL
     request <- newRequest(employee, category, days, title, description)
-    errors <- validate(request)                       // step 6
-    IF errors is empty THEN RETURN request            // step 8
-    display(errors)                                   // employee corrects (step 7)
+    errors <- validate(request)                       
+    IF errors is empty THEN RETURN request            
+    display(errors)                                   
   END LOOP
 END FUNCTION
 
@@ -398,7 +397,7 @@ FUNCTION validate(request)
   FOR EACH rule IN rules
     IF NOT rule.isSatisfiedBy(request) THEN add rule.message
   IF totalHours(request) > remainingHours(request)
-    THEN add "insufficient balance"                   // TO CONFIRM
+    THEN add "insufficient balance"                   
   RETURN errors
 END FUNCTION
 ```
@@ -407,26 +406,26 @@ END FUNCTION
 
 ```text
 PROCEDURE reviewRequests(manager)
-  authenticate(manager)                           // steps 10-11
+  authenticate(manager)                           
   pending <- findRequests(status = PENDING_APPROVAL, approver = manager)
-  display(ownRequests(manager), allowances(manager), pending)   // step 12
+  display(ownRequests(manager), allowances(manager), pending)   
   request <- manager.selects(pending)
-  display(request.details)                        // step 13
+  display(request.details)                        
   IF request.status <> PENDING_APPROVAL THEN
-    display("Already decided"); RETURN            // TO CONFIRM
+    display("Already decided"); RETURN            
   END IF
   decision <- manager.chooses(APPROVE, REJECT)
   IF decision = APPROVE THEN
     request.status <- APPROVED
   ELSE
-    reason <- manager.enterReason()               // mandatory
+    reason <- manager.enterReason()               
     WHILE reason is empty: reason <- manager.enterReason()
     request.status <- REJECTED
   END IF
   saveDecision(request, manager, decision, reason, now())
   logActivity(manager, decision, request)
-  updateAllowance(request)                        // TO CONFIRM
-  sendEmail(request.employee, decision, reason)   // step 14
+  updateAllowance(request)                        
+  sendEmail(request.employee, decision, reason)   
   goToHomePage(manager)
 END PROCEDURE
 ```
