@@ -1,281 +1,185 @@
-# Vacation Tracking System (VTS)
+# Vacation Tracking System docs
 
-A web application, delivered as an extension of the company Intranet, for managing and tracking employee vacations: employees submit requests, authorized managers review and decide, and everyone gets visibility into vacation balances and request status.
+## Index
 
-> **Note on conventions:** items marked **TO CONFIRM** are inferred from the scenario and must be validated against the original case study before being treated as final requirements.
-
-## Table of Contents
-
-1. [Vision](#1-vision)
-2. [System Requirements](#2-system-requirements)
-3. [Domain (Problem Definition)](#3-domain-problem-definition)
-4. [Actors](#4-actors)
-5. [Use Cases](#5-use-cases)
-6. [Entities (Data Model)](#6-entities-data-model)
-7. [Flowchart (System Flow)](#7-flowchart-system-flow)
-8. [Sequence Diagram](#8-sequence-diagram)
-9. [Pseudocode](#9-pseudocode)
-
----
-
-## 1. Vision
-
-### Problem
-
-Tracking employee vacations is difficult because employees work on multiple projects and report to more than one manager. Requests, balances, and approvals are hard to follow, and coordination between employees and managers is slow.
-
-### Target Users
-
-- **Employees**
-- **Managers**
-
-### Proposed Solution
-
-A **web application** (the VTS) that lets employees request vacations and view their balances, and lets authorized managers review, approve, or reject requests, with e-mail notifications at each step.
-
-### Business Value
-
-- Better visibility into vacation balances and requests.
-- Easier coordination between employees and managers.
-- A single, consistent place to record decisions and request status.
+- [**Vision**](#vision)
+- [**Goals**](#goals)
+- [**Domain**](#domain)
+- [**Actors**](#actors)
+- [**Use Cases**](#use-cases)
+- [**Requirements**](#requirements)
+  - [Functional Requirements](#functional-requirements)
+  - [Non-Functional Requirements](#non-function-requirements)
+  - [Constraints ](#constraints)
+- [**Data Model**](#data-model)
+- [**Flowchart**](#flowchart)
+- [**Sequence Diagram**](#sequence-diagram)
+- [**Pseudocode**](#pseudocode)
 
 ---
 
-## 2. System Requirements
+## Vision
+> Develop an intuitive and user-friendly system that allows employees to manage their vacation time, sick leave, and personal time off independently, reducing HR involvement and streamlining the overall leave management process.
+
+## Goals
+> Improve the organization's internal business processes by reducing the time, effort, and costs associated with managing vacation and leave requests, with a focus on minimizing HR workload and enhancing process efficiency.
+
+## Domain
+> The domain centers on the management of employee leave, addressing the inefficiencies of manual processes. Key challenges include ensuring compliance with company policies and employee-specific regulations, streamlining the approval workflow without disrupting business operations, and mitigating workforce shortages in critical positions. Manual tracking often causes delays, miscommunication, and operational bottlenecks, emphasizing the need for an automated solution to enhance accuracy, efficiency, and overall productivity.
+
+## Actors
+
+1. **Employee**: Uses the system to manage their vacation time.
+2. **Manager**: Has the same abilities as an employee but can approve vacation requests for subordinates and award compensatory time within system limits.
+3. **Clerk**: A member of HR with rights to view, add, or remove employee records and ensure data accuracy across HR systems. If also an employee, they use separate login IDs for HR and employee roles.
+4. **System Admin**: Ensures the system runs smoothly, manages technical resources (e.g., web server, database), and archives log files.
+
+## Use Cases
+The main use cases are as follows.
+
+- ### [**Manage Time**](./use-cases/manage-time.md): 
+		Describes how employees request and view vacation time requests.
+
+- ### [**Approve Request**](./use-cases/approve-request.md): 
+		Describes how a manager responds to a subordinate’s request for vacation time. 
+
+- ### [**Award Time**](./use-cases/award-time.md): 
+		Describes how a manager can award a subordinate extra leave time (comp time).
+
+- ### [**Edit Employee Record**](./use-cases/edit-employee-record.md):
+ 		Describes how an HR clerk edits an employee’s information in the system. This includes setting all the leave time allowances and the maximum time that can be awarded by the manager.
+
+- ### [**Manage Locations**](./use-cases/manage-locations.md):
+		Describes how an HR clerk manages location records and their rules.
+
+- ### [**Manage Leave Categories**](./use-cases/manage_leave_categories.md): 
+		Describes how an HR clerk manage leave categories and their rules.
+
+- ### [**Override Leave Records**](./use-cases/override-leave-records.md): 
+		Describes how an HR clerk may override any rejection of leave time requests made by the rules in the system.
+
+- ### [**Back Up System Logs**](./use-cases/back-up-system-logs.md): 
+		Describes how the system administrator backs up the system’s logs. 
+
+| <img src="./digrams/usecase-diagram.drawio.png" width="100%" />
+| --------------------------------------------------------------- |
+| **Use Case Model** |
+
+## Requirements 
 
 ### Functional Requirements
-
-**A. Employee: vacation request management**
-
-| ID | Requirement |
-|----|-------------|
-| FR-01 | **View Vacation Information:** the system shall show the employee their requests and vacation balances, covering the last 6 months and up to 18 months into the future. |
-| FR-02 | **Select Vacation Category:** the system shall let the employee choose only a vacation type with a positive balance. |
-| FR-03 | **Specify Vacation Dates and Hours:** the system shall let the employee select one or more days and the hours per day, with a visual calendar to help choose and compare dates. |
-| FR-04 | **Enter Request Details:** the system shall let the employee enter a short title and a description of no more than one paragraph. |
-| FR-05 | **Validate Request:** the system shall verify that the data is complete and valid before accepting the request. |
-| FR-06 | **Display Validation Errors:** if the data is incomplete or invalid, the system shall redisplay the page and identify and explain the errors. |
-| FR-07 | **Edit or Cancel Request:** the system shall let the employee correct the request data or cancel the request. |
-| FR-08 | **Submit Vacation Request:** the system shall allow submission once the request passes validation. |
-
-**B. Request processing**
-
-| ID | Requirement |
-|----|-------------|
-| FR-09 | **Set Request Status:** on submission, the system shall set the request to *Pending Approval* if manager approval is required. |
-| FR-10 | **Notify Authorized Manager(s):** if approval is required, the system shall e-mail the manager(s) authorized to approve. |
-| FR-11 | **Access Request Through Portal or Email:** the system shall let the manager reach the VTS through a link in the e-mail, or by logging in to the Intranet and navigating to the system. |
-| FR-20 | **Handle Requests Not Requiring Approval:** if a request does not require approval, the system shall record it without the *Pending Approval* state, with the resulting status defined by the approved business rule. **TO CONFIRM** |
-
-**C. Manager: review and decision**
-
-| ID | Requirement |
-|----|-------------|
-| FR-12 | **View Pending Requests:** the system shall show the manager a separate section with pending requests from their direct reports. |
-| FR-13 | **Review Request Details:** the system shall let the manager select each request individually and view its details. |
-| FR-14 | **Approve Request:** the system shall let an authorized manager approve a request. |
-| FR-15 | **Reject Request:** the system shall let an authorized manager reject a request. |
-| FR-16 | **Provide Rejection Explanation:** the system shall require the manager to enter an explanation when rejecting. |
-| FR-17 | **Record Decision and Update Status:** the system shall record the decision and set the status to *Approved* or *Rejected*. |
-| FR-18 | **Notify Employee of Decision:** the system shall e-mail the employee with the approval or rejection. |
-| FR-19 | **Return Manager to Home Page:** after the decision is submitted, the system shall return the manager to the home page, where they can review other requests, submit their own, or leave the system. |
-| FR-21 | **Update Vacation Balance:** the system shall update the balance on approval and restore it on rejection or cancellation, per company policy. **TO CONFIRM** |
-| FR-22 | **Prevent Conflicting Decisions:** the system shall not allow a decision on a request that has already been decided. **TO CONFIRM** |
-
+1. Vacation Management 
+	- Implement a rules-based system to validate and verify vacation and leave requests.
+	- Allow employees to submit vacation requests up to 1.5 years in advance.
+	- Provide access to vacation request history for the previous calendar year.
+2. Approval Workflow
+	- Enable manager approval.
+	- Notify manager via email of pending approval request.
+	- Notify employees via email of changes to their request status.
+3. Integration
+	- Ensure seamless integration with existing hardware and software systems.
+	- Leverage the organization's SSO portal for secure authentication.
+4.  Logging and Overrides
+	- Maintain activity logs for all transactions to ensure traceability.
+	- Allow HR and system administrator to override actions, with all the overrides logged.
+5. HR Flexibility
+	- Enable HR to set and modify constraints on vacation requests.
+	- Allow managers to award additional personal leave time within system defined limits.
 ### Non-Functional Requirements
+- **Useability**: The system must be intuitive, easy to navigate, and require minimal training for users.
+- **Portability**: The system should function effectively on the organization's existing hardware.
+- **Compatibility**: Integrate with the current HR system to retrieve and update employee data seamlessly.
+- **Security**: Ensure secure authentication and data privacy through encryption and access control.
+- **Availability**: Provide 24/7 access with minimal downtime.
+- **Accountability**: Log all transactions and system actions to ensure transparency and auditability.
 
-| ID | Category | Requirement |
-|----|----------|-------------|
-| NFR-01 | Security | Access to the system shall require authentication and appropriate authorization, performed through the existing Intranet Portal framework. |
-
-The scenario does not specify measurable targets for privacy, performance, availability, or reliability. These are tracked as open questions below rather than invented as requirements.
-
-### Constraints
-
-| ID | Constraint | Description |
-|----|------------|-------------|
-| C-01 | Web application as an extension of the existing Intranet | The company chose to deliver the functionality as a web application that extends the current Intranet, so integration with the existing environment must be respected. |
-| C-02 | Existing Portal framework | The scenario assumes the Portal framework authenticates users, which may become an architectural constraint if the system must rely on it rather than replace it. |
-
-#### Business rules
-
-- Only vacation types with a positive balance can be selected.
-- The request description is limited to one paragraph.
-- A rejection must include an explanation.
-- Only an authorized manager can approve or reject a request.
-
-#### Assumptions
-
-- Employee data and employee-to-manager relationships are available to the system.
-- Vacation balances are up to date before a request is submitted.
-- An e-mail service is available.
-- A known policy defines vacation types and balance calculation rules.
-- Authorized manager(s) can be determined for each employee.
-
-#### Open questions
-
-| ID | Question |
-|----|----------|
-| Q-01 | With multiple authorized managers, is one approval enough or are all required? What happens on conflicting decisions? |
-| Q-02 | What is the status of a request that does not require approval, and what makes it so? |
-| Q-03 | Is the balance deducted on submission or on approval, and restored on rejection or cancellation? |
-| Q-04 to Q-07 | Privacy and data retention, performance, availability, and reliability targets. |
+### Constraints 
+- The system must integrate with existing HR systems for employee data synchronization.
+- All features must comply with the organization's IT infrastructure and policies.
 
 ---
 
-## 3. Domain (Problem Definition)
+## Data Model
 
-The domain is **employee time-off management inside a company**. Employees hold balances of different vacation types, request time off for specific days and hours, and managers decide on those requests.
-
-### Key concepts
-
-| Concept | Meaning |
-|---------|---------|
-| **Employee** | A person who holds vacation balances and can submit requests. Managers are also employees. |
-| **Manager** | An employee authorized to approve or reject requests of the employees they manage. An employee may have more than one manager. |
-| **Vacation Type** | A category of leave (for example annual leave) with its own balance. |
-| **Vacation Balance** | The remaining hours an employee has for a vacation type. |
-| **Vacation Request** | A request for one or more days, with hours per day, a title, and a description. |
-| **Request Status** | *Pending Approval*, *Approved*, or *Rejected*. |
-| **Decision** | A manager's approval or rejection, with a mandatory explanation on rejection. |
-| **Notification** | An e-mail sent to the manager(s) on submission and to the employee on decision. |
-
-### Scope
-
-- **In scope:** viewing balances and requests, submitting and validating requests, notifying managers, reviewing and deciding, notifying employees.
-- **Out of scope (not specified):** payroll integration, reporting, and detailed vacation policy rules.
-
----
-
-## 4. Actors
-
-| Actor | Type | Responsibilities |
-|-------|------|------------------|
-| **Employee** | Primary | Views requests and balances, selects vacation type, enters dates, hours, title, and description, corrects or cancels, and submits the request. |
-| **Manager (Authorized Manager)** | Primary | Receives the notification, opens the VTS, reviews pending requests, approves or rejects with an explanation. Also acts as an Employee for their own requests. |
-| **Email Service** | Secondary | Sends the approval-request e-mail to managers and the decision e-mail to the employee. |
-| **Intranet Portal / Authentication** | Secondary | Authenticates users and hosts the VTS as an Intranet extension. |
-
-> Actors are roles, not people: the same person can play both Employee and Manager.
-
----
-
-## 5. Use Cases
-
-```mermaid
-flowchart LR
-    Employee([Employee])
-    Manager([Manager])
-    Email([Email Service])
-
-    UC1((Manage Time))
-    UC2((View Vacation Information))
-    UC3((Review Pending Requests))
-    UC4((Approve or Reject Request))
-
-    Employee --- UC1
-    Employee --- UC2
-    Manager --- UC1
-    Manager --- UC2
-    Manager --- UC3
-    Manager --- UC4
-    Email --- UC1
-    Email --- UC4
-```
-
-| ID | Use Case | Primary Actor | Summary |
-|----|----------|---------------|---------|
-| UC-01 | **Manage Time** | Employee | Submit a new vacation request and follow it through review until the decision. |
-| UC-02 | View Vacation Information | Employee, Manager | See requests and balances for the last 6 to the next 18 months. |
-| UC-03 | Review Pending Requests | Manager | See and open the pending requests of direct reports. |
-| UC-04 | Approve or Reject Request | Manager | Decide on a request, with a mandatory explanation on rejection. |
-
-### UC-01: Manage Time
-
-| Item | Description |
-|------|-------------|
-| **Use case name** | Manage Time |
-| **Actor** | Employee (primary); the Manager participates in review and decision |
-| **Goal** | The employee wishes to submit a new request for vacation time. |
-| **Preconditions** | The employee is authenticated through the Portal, the system knows their identity, and they are allowed to manage their own vacation requests. |
-
-**Main flow (optimistic):**
-
-1. The employee opens the VTS through a link in the Intranet Portal.
-2. The system shows current and past requests and remaining balances for the last 6 months up to 18 months ahead.
-3. The employee selects a vacation type with a balance greater than zero.
-4. The system asks for dates and hours and provides a visual calendar.
-5. The employee enters the dates, hours per day, a short title, and a description, then submits.
-6. The system validates the data (see alternate flow A1 on failure).
-7. When valid, the employee returns to the VTS home page.
-8. If approval is required, the system immediately e-mails the authorized manager(s).
-9. The request is set to *Pending Approval*.
-10. The manager opens the request through the e-mail link or by logging in to the Intranet and navigating to the VTS.
-11. The system may ask the manager to authenticate before granting access.
-12. The manager's home page shows their own requests and balances and a separate section of pending requests from direct reports. The manager selects one request.
-13. The system shows the details. The manager approves (status becomes *Approved*) or rejects with a required explanation (status becomes *Rejected*).
-14. The system e-mails the employee with the decision and returns the manager to the home page, where they can review more requests, submit their own, or exit.
-
-**Alternate flows (pragmatic):**
-
-| ID | Condition | Behavior |
-|----|-----------|----------|
-| A1 | Data is incomplete, invalid, or fails validation (step 6) | The system redisplays the page with the errors identified and explained. The employee corrects the data or cancels the request. |
-| A2 | Manager rejects (step 13) | An explanation is mandatory before the decision is recorded. |
-| A3 | Request does not require approval (step 8) | Recorded without *Pending Approval*. **TO CONFIRM** (Q-02) |
-| A4 | Request already decided | The system shows the current status and does not allow a second decision. **TO CONFIRM** (Q-01) |
-
----
-
-## 6. Entities (Data Model)
+The model covers the entities needed by the use cases above. The core entities for **Manage Time** are `Employee`, `LeaveCategory`, `LeaveAllowance`, `LeaveRequest`, `LeaveRequestDay`, `RequestDecision`, and `Notification`. The remaining entities support the other use cases (HR configuration, overrides, comp time, and logging).
 
 ```mermaid
 erDiagram
-    EMPLOYEE ||--o{ EMPLOYEE_MANAGER : "reports to (employee)"
-    EMPLOYEE ||--o{ EMPLOYEE_MANAGER : "manages (manager)"
-    EMPLOYEE ||--o{ VACATION_BALANCE : has
-    VACATION_TYPE ||--o{ VACATION_BALANCE : "applies to"
-    EMPLOYEE ||--o{ VACATION_REQUEST : submits
-    VACATION_TYPE ||--o{ VACATION_REQUEST : "categorizes"
-    VACATION_REQUEST ||--|{ VACATION_REQUEST_DAY : "spans"
-    VACATION_REQUEST ||--o{ REQUEST_DECISION : "receives"
-    EMPLOYEE ||--o{ REQUEST_DECISION : "decides (manager)"
-    VACATION_REQUEST ||--o{ NOTIFICATION : triggers
-    EMPLOYEE ||--o{ NOTIFICATION : "receives (recipient)"
+    LOCATION ||--o{ EMPLOYEE : "works at"
+    EMPLOYEE ||--o{ USER_ACCOUNT : "logs in with"
+    EMPLOYEE ||--o{ EMPLOYEE_MANAGER : "reports to"
+    EMPLOYEE ||--o{ EMPLOYEE_MANAGER : "manages"
+    LOCATION ||--o{ LEAVE_RULE : "has"
+    LEAVE_CATEGORY ||--o{ LEAVE_RULE : "has"
+    LEAVE_CATEGORY ||--o{ LEAVE_ALLOWANCE : "defines"
+    EMPLOYEE ||--o{ LEAVE_ALLOWANCE : "holds"
+    EMPLOYEE ||--o{ LEAVE_REQUEST : "submits"
+    LEAVE_CATEGORY ||--o{ LEAVE_REQUEST : "classifies"
+    LEAVE_REQUEST ||--|{ LEAVE_REQUEST_DAY : "spans"
+    LEAVE_REQUEST ||--o{ REQUEST_DECISION : "receives"
+    EMPLOYEE ||--o{ REQUEST_DECISION : "decides"
+    EMPLOYEE ||--o{ COMP_TIME_AWARD : "awards"
+    EMPLOYEE ||--o{ COMP_TIME_AWARD : "receives"
+    LEAVE_REQUEST ||--o{ OVERRIDE_RECORD : "overridden by"
+    USER_ACCOUNT ||--o{ OVERRIDE_RECORD : "performs"
+    LEAVE_REQUEST ||--o{ NOTIFICATION : "triggers"
+    EMPLOYEE ||--o{ NOTIFICATION : "receives"
+    USER_ACCOUNT ||--o{ ACTIVITY_LOG : "generates"
 
     EMPLOYEE {
         int employeeId PK
         string name
         string email
+        int locationId FK
+        decimal maxAwardHours
+    }
+    USER_ACCOUNT {
+        int accountId PK
+        int employeeId FK
+        string loginId
+        string role
     }
     EMPLOYEE_MANAGER {
         int employeeId PK, FK
         int managerId PK, FK
         boolean canApprove
     }
-    VACATION_TYPE {
-        int typeId PK
+    LOCATION {
+        int locationId PK
         string name
     }
-    VACATION_BALANCE {
-        int balanceId PK
+    LEAVE_CATEGORY {
+        int categoryId PK
+        string name
+        boolean isActive
+    }
+    LEAVE_RULE {
+        int ruleId PK
+        int locationId FK
+        int categoryId FK
+        string ruleType
+        string ruleValue
+    }
+    LEAVE_ALLOWANCE {
+        int allowanceId PK
         int employeeId FK
-        int typeId FK
+        int categoryId FK
+        decimal allowedHours
         decimal remainingHours
     }
-    VACATION_REQUEST {
+    LEAVE_REQUEST {
         int requestId PK
         int employeeId FK
-        int typeId FK
+        int categoryId FK
         string title
         string description
         string status
         datetime submittedAt
     }
-    VACATION_REQUEST_DAY {
+    LEAVE_REQUEST_DAY {
         int dayId PK
         int requestId FK
-        date vacationDate
+        date leaveDate
         decimal hours
     }
     REQUEST_DECISION {
@@ -286,6 +190,20 @@ erDiagram
         string rejectionReason
         datetime decidedAt
     }
+    COMP_TIME_AWARD {
+        int awardId PK
+        int managerId FK
+        int employeeId FK
+        decimal hours
+        datetime awardedAt
+    }
+    OVERRIDE_RECORD {
+        int overrideId PK
+        int requestId FK
+        int accountId FK
+        string reason
+        datetime overriddenAt
+    }
     NOTIFICATION {
         int notificationId PK
         int requestId FK
@@ -293,52 +211,68 @@ erDiagram
         string type
         datetime sentAt
     }
+    ACTIVITY_LOG {
+        int logId PK
+        int accountId FK
+        string action
+        string entityType
+        int entityId
+        datetime loggedAt
+    }
 ```
 
-| Entity | Purpose |
-|--------|---------|
-| **Employee** | A person in the company; managers are employees too. |
-| **EmployeeManager** | Many-to-many link between an employee and their managers, with an approval flag. |
-| **VacationType** | A category of leave. |
-| **VacationBalance** | Remaining hours of a vacation type for an employee. |
-| **VacationRequest** | The request; `status` is one of `PENDING_APPROVAL`, `APPROVED`, `REJECTED`. |
-| **VacationRequestDay** | One day of a request with the hours requested for that day. |
-| **RequestDecision** | A manager's decision, with a required `rejectionReason` when rejecting. |
-| **Notification** | An e-mail sent to a manager (approval request) or an employee (decision). |
+| Entity | Purpose | Used by |
+|--------|---------|---------|
+| **Employee** | A person in the company (managers, clerks, and admins are employees too). Holds the maximum comp time a manager may award. | All |
+| **UserAccount** | A login with a role (`EMPLOYEE`, `MANAGER`, `CLERK`, `ADMIN`). A clerk who is also an employee has two accounts. | Security, Overrides, Logging |
+| **EmployeeManager** | Links an employee to one or more managers. | Manage Time, Approve Request |
+| **Location** | A site whose leave rules apply to its employees. | Manage Locations |
+| **LeaveCategory** | A kind of leave (vacation, sick leave, personal time, and so on). | Manage Leave Categories |
+| **LeaveRule** | A rule per location and category, used to validate requests. | Manage Time, Manage Locations, Manage Leave Categories |
+| **LeaveAllowance** | Allowed and remaining hours per employee and category. | Manage Time, Edit Employee Record |
+| **LeaveRequest** | A request; `status` is `PENDING_APPROVAL`, `APPROVED`, or `REJECTED`. | Manage Time, Approve Request |
+| **LeaveRequestDay** | One requested day and its hours. | Manage Time |
+| **RequestDecision** | A manager's decision, with a required `rejectionReason` on rejection. | Approve Request |
+| **CompTimeAward** | Extra leave awarded by a manager, within `maxAwardHours`. | Award Time |
+| **OverrideRecord** | An HR or admin override of a rejection or action. | Override Leave Records |
+| **Notification** | An e-mail to a manager (pending request) or an employee (status change). | Manage Time, Approve Request |
+| **ActivityLog** | Traceability record for every transaction and override. | Back Up System Logs |
 
-> `EmployeeManager`, `RequestDecision`, and `Notification` are derived from the requirements (multiple managers, recording decisions and explanations, e-mail notifications) rather than stated explicitly in the scenario.
+> `LeaveRule`, `OverrideRecord`, `CompTimeAward`, `Notification`, and `ActivityLog` are derived from the requirements text (rules-based validation, overrides, comp time, e-mail notifications, activity logs). Their exact attributes should be confirmed against the detailed use case files.
 
 ---
 
-## 7. Flowchart (System Flow)
+## Flowchart
+
+System flow of the **Manage Time** use case, from submitting a request to the manager's decision.
 
 ```mermaid
 flowchart TD
     subgraph EMP["Employee phase: submit request"]
-        S([Start]) --> A1["Employee opens VTS from Intranet Portal"]
-        A1 --> A2["System shows requests and balances<br/>(last 6 to next 18 months)"]
-        A2 --> A3["Select vacation type<br/>(balance greater than 0)"]
+        S([Start]) --> A1["Employee opens VTS from the portal"]
+        A1 --> A2["System shows requests and balances<br/>(last 6 months to next 18 months)"]
+        A2 --> A3["Select leave category<br/>(balance greater than 0)"]
         A3 --> A4["Enter dates, hours, title, description<br/>and submit"]
-        A4 --> D1{"Data valid?"}
+        A4 --> D1{"Passes validation rules?"}
         D1 -- No --> E1["Show errors"]
         E1 -- Employee corrects data --> A4
         E1 -- Cancel --> X1([End: cancelled])
         D1 -- Yes --> A5["Return to VTS home page"]
         A5 --> D2{"Approval required?"}
-        D2 -- No --> N1["Record without approval<br/>(rule TO CONFIRM)"]
+        D2 -- No --> N1["Record without approval<br/>(rule to confirm)"]
         N1 --> X2([End])
         D2 -- Yes --> A6["Status = Pending Approval<br/>E-mail authorized manager(s)"]
     end
 
     subgraph MGR["Manager phase: review and decide"]
-        B1["Manager opens VTS<br/>(e-mail link or Intranet Portal)"]
+        B1["Manager opens VTS<br/>(e-mail link or portal)"]
         B1 --> B2["Verify identity<br/>(login if required)"]
         B2 --> B3["Review pending list,<br/>select request, view details"]
         B3 --> D3{"Approve?"}
         D3 -- Yes --> B4["Status = Approved"]
         D3 -- No --> B5["Enter rejection explanation<br/>(required)"]
         B5 --> B6["Status = Rejected"]
-        B4 --> B7["Send decision e-mail to employee"]
+        B4 --> B7["Log decision<br/>E-mail employee"]
         B6 --> B7
         B7 --> B8["Manager returns to home page"]
         B8 --> X3([End])
@@ -349,7 +283,7 @@ flowchart TD
 
 ---
 
-## 8. Sequence Diagram
+## Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -358,12 +292,12 @@ sequenceDiagram
     participant M as Email Service
     actor G as Manager
 
-    E->>V: 1. Open VTS from Intranet Portal link
+    E->>V: 1. Open VTS from portal link
     V-->>E: 2. Show requests and balances (-6 to +18 months)
-    E->>V: 3. Select vacation type (balance > 0)
+    E->>V: 3. Select leave category (balance > 0)
     V-->>E: 4. Show visual calendar
     E->>V: 5. Submit dates, hours, title, description
-    V->>V: 6. Validate request
+    V->>V: 6. Validate request against rules
 
     alt Data incomplete or invalid
         V-->>E: 6. Redisplay page with errors
@@ -374,7 +308,7 @@ sequenceDiagram
             V->>M: 8. Send approval e-mail
             V->>V: 9. Status = Pending Approval
             M-->>G: 8. E-mail with request link
-            G->>V: 10. Open link (e-mail or Intranet Portal)
+            G->>V: 10. Open link (e-mail or portal)
             V-->>G: 11. Verify identity / login if required
             V-->>G: 12. Home: own requests + pending requests
             G->>V: 12. Select a request
@@ -386,6 +320,7 @@ sequenceDiagram
                 G->>V: 13. Reject + rejection explanation
                 V->>V: Status = Rejected
             end
+            V->>V: Log activity
             V->>M: 14. Send decision e-mail
             M-->>E: 14. Approved / Rejected notification
             V-->>G: 14. Return to home page
@@ -395,57 +330,58 @@ sequenceDiagram
 
 ---
 
-## 9. Pseudocode
+## Pseudocode
 
-Lines marked `TO CONFIRM` are assumptions that need validation against the case study.
+Lines marked `TO CONFIRM` are assumptions that need validation against the detailed use case.
 
-### Main procedure
+### Manage Time
 
 ```text
 PROCEDURE ManageTime(employee)
-  REQUIRE employee.isAuthenticated()              // precondition
+  REQUIRE employee.isAuthenticated()              // via the SSO portal
   showDashboard(employee)                         // steps 1-2
   request <- createRequest(employee)              // steps 3-7
   IF request = NULL THEN RETURN                   // employee cancelled
   request.submittedAt <- now()
+  logActivity(employee, "SUBMIT_REQUEST", request)
   IF approvalRequired(request) THEN               // step 8
     managers <- getAuthorizedManagers(employee)
     request.status <- PENDING_APPROVAL            // step 9
     saveRequest(request)
     sendEmail(managers, requestLink(request))
   ELSE
-    recordWithoutApproval(request)                // TO CONFIRM (Q-02)
+    recordWithoutApproval(request)                // TO CONFIRM
   END IF
 END PROCEDURE
 ```
 
-### Dashboard (steps 1-2)
+### Show the employee dashboard
 
 ```text
 PROCEDURE showDashboard(employee)
   from <- today() - 6 MONTHS
   to   <- today() + 18 MONTHS
   requests <- findRequests(employee, from, to)
-  balances <- findBalances(employee)
+  balances <- findAllowances(employee)
   display(requests, balances)
 END PROCEDURE
 ```
 
-### Create and validate a request (steps 3-8)
+### Create and validate a request
 
 ```text
 FUNCTION createRequest(employee)
-  types <- balances WHERE remainingHours > 0      // step 3
-  type  <- employee.chooses(types)
+  categories <- allowances WHERE remainingHours > 0   // step 3
+  category   <- employee.chooses(categories)
   LOOP
-    days  <- calendar.select(dates, hoursPerDay)  // steps 4-5
+    days  <- calendar.select(dates, hoursPerDay)      // steps 4-5
     title <- input(); description <- input()
     action <- employee.chooses(SUBMIT, CANCEL)
     IF action = CANCEL THEN RETURN NULL
-    request <- newRequest(employee, type, days, title, description)
-    errors <- validate(request)                   // step 6
-    IF errors is empty THEN RETURN request        // step 8
-    display(errors)                               // employee corrects (step 7)
+    request <- newRequest(employee, category, days, title, description)
+    errors <- validate(request)                       // step 6
+    IF errors is empty THEN RETURN request            // step 8
+    display(errors)                                   // employee corrects (step 7)
   END LOOP
 END FUNCTION
 
@@ -454,26 +390,30 @@ FUNCTION validate(request)
   IF request.days is empty THEN add "dates required"
   FOR EACH day IN request.days
     IF day.hours <= 0 THEN add "hours must be positive"
+    IF day.date > today() + 18 MONTHS THEN add "too far in advance"
   IF request.title is empty THEN add "title required"
   IF request.description has more than one paragraph
     THEN add "description too long"
-  IF totalHours(request) > balance(request.type)
-    THEN add "insufficient balance"               // TO CONFIRM
+  rules <- findRules(employee.location, request.category)
+  FOR EACH rule IN rules
+    IF NOT rule.isSatisfiedBy(request) THEN add rule.message
+  IF totalHours(request) > remainingHours(request)
+    THEN add "insufficient balance"                   // TO CONFIRM
   RETURN errors
 END FUNCTION
 ```
 
-### Manager review and decision (steps 10-14)
+### Manager review and decision
 
 ```text
 PROCEDURE reviewRequests(manager)
   authenticate(manager)                           // steps 10-11
   pending <- findRequests(status = PENDING_APPROVAL, approver = manager)
-  display(ownRequests(manager), balances(manager), pending)   // step 12
+  display(ownRequests(manager), allowances(manager), pending)   // step 12
   request <- manager.selects(pending)
   display(request.details)                        // step 13
   IF request.status <> PENDING_APPROVAL THEN
-    display("Already decided"); RETURN            // TO CONFIRM (Q-01)
+    display("Already decided"); RETURN            // TO CONFIRM
   END IF
   decision <- manager.chooses(APPROVE, REJECT)
   IF decision = APPROVE THEN
@@ -484,7 +424,8 @@ PROCEDURE reviewRequests(manager)
     request.status <- REJECTED
   END IF
   saveDecision(request, manager, decision, reason, now())
-  updateBalance(request)                          // TO CONFIRM (Q-03)
+  logActivity(manager, decision, request)
+  updateAllowance(request)                        // TO CONFIRM
   sendEmail(request.employee, decision, reason)   // step 14
   goToHomePage(manager)
 END PROCEDURE
