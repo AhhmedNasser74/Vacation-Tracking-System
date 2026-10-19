@@ -61,7 +61,8 @@ The main use cases are as follows.
 - ### [**Back Up System Logs**](./use-cases/back-up-system-logs.md): 
 		Describes how the system administrator backs up the system’s logs. 
 
-| <img src="./digrams/usecase-diagram.drawio.png" width="100%" />
+| <img src="./<img width="1100" height="800" alt="usecase-diagram drawio" src="https://github.com/user-attachments/assets/dd4e3c0e-d6a3-42ed-9348-de134cb22647" />
+ />
 | --------------------------------------------------------------- |
 | **Use Case Model** |
 
